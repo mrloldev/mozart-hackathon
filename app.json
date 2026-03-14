@@ -9,7 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We use your location to track where you listen to music and create personalized experiences.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location in the background to track your listening journey and provide location-based recommendations.",
+        "NSLocationAlwaysUsageDescription": "We need your location in the background to track your listening journey.",
+        "UIBackgroundModes": ["location"]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +26,12 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.labi.labi"
+      "package": "com.labi.labi",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION"
+      ]
     },
     "web": {
       "output": "static",
@@ -40,7 +51,17 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Remixer to use your location to track your listening journey and provide personalized recommendations.",
+          "locationAlwaysPermission": "Allow Remixer to use your location in the background.",
+          "locationWhenInUsePermission": "Allow Remixer to use your location.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
