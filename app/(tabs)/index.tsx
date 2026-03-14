@@ -1,13 +1,45 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Platform, Pressable, StyleSheet } from 'react-native';
 
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { useAuth } from '@/hooks/use-auth';
+import { signInWithSpotify, signOut } from '@/lib/auth';
 
 export default function HomeScreen() {
+  const { isAuthenticated, loading, user } = useAuth();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+
+  const handleSpotifySignIn = async () => {
+    try {
+      setIsSigningIn(true);
+      await signInWithSpotify();
+    } catch (error) {
+      console.error('Spotify sign in error:', error);
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#1DB954" />
+      </ThemedView>
+    );
+  }
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -21,6 +53,34 @@ export default function HomeScreen() {
         <ThemedText type="title">Welcome!</ThemedText>
         <HelloWave />
       </ThemedView>
+
+      <ThemedView style={styles.authContainer}>
+        {isAuthenticated ? (
+          <>
+            <ThemedText type="subtitle">
+              Signed in as {user?.email ?? 'User'}
+            </ThemedText>
+            <Pressable style={styles.signOutButton} onPress={handleSignOut}>
+              <ThemedText style={styles.signOutButtonText}>Sign Out</ThemedText>
+            </Pressable>
+          </>
+        ) : (
+          <Pressable
+            style={[styles.spotifyButton, isSigningIn && styles.spotifyButtonDisabled]}
+            onPress={handleSpotifySignIn}
+            disabled={isSigningIn}
+          >
+            {isSigningIn ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <ThemedText style={styles.spotifyButtonText}>
+                Sign in with Spotify
+              </ThemedText>
+            )}
+          </Pressable>
+        )}
+      </ThemedView>
+
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
         <ThemedText>
@@ -36,53 +96,52 @@ export default function HomeScreen() {
           to open developer tools.
         </ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   titleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  authContainer: {
+    gap: 12,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  spotifyButton: {
+    backgroundColor: '#1DB954',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 50,
+    minWidth: 220,
+    alignItems: 'center',
+  },
+  spotifyButtonDisabled: {
+    opacity: 0.7,
+  },
+  spotifyButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  signOutButton: {
+    backgroundColor: '#333',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 50,
+  },
+  signOutButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
   stepContainer: {
     gap: 8,
