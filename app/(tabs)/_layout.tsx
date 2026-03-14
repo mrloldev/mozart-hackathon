@@ -3,18 +3,22 @@ import React from 'react';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Brand } from '@/constants/brand';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { isAuthenticated } = useAuth();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Brand.primary,
+        tabBarInactiveTintColor: '#71717a',
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle: isAuthenticated
+          ? { backgroundColor: Brand.surface, borderTopColor: Brand.border }
+          : { display: 'none' },
       }}>
       <Tabs.Screen
         name="index"

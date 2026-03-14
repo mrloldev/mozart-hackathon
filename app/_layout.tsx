@@ -7,6 +7,8 @@ import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-reanimated";
 
+import "@/global.css";
+
 export const unstable_settings = {
   initialRouteName: "index",
 };

@@ -1,15 +1,13 @@
-import { Image } from 'expo-image';
 import { useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { Brand } from '@/constants/brand';
 import { useAuth } from '@/hooks/use-auth';
 import { signInWithSpotify, signOut } from '@/lib/auth';
 
-export default function HomeScreen() {
+export default function WelcomeScreen() {
   const { isAuthenticated, loading, user } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -34,124 +32,75 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#1DB954" />
-      </ThemedView>
+      <View className="flex-1 items-center justify-center bg-surface">
+        <ActivityIndicator size="large" color={Brand.primary} />
+      </View>
     );
   }
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
+    <View className="flex-1 bg-surface">
+      <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
+        <View className="flex-1 px-10 justify-center items-center">
+          <View className="items-center mb-16">
+            <Animated.Text
+              entering={FadeInDown.delay(100).duration(400)}
+              className="text-5xl font-black tracking-tight mb-3 text-white"
+            >
+              Remixer
+            </Animated.Text>
+            <Animated.Text
+              entering={FadeInDown.delay(200).duration(400)}
+              className="text-base leading-6 text-neutral-400 text-center max-w-[280px]"
+            >
+              Mix your music. Remix your vibe.
+            </Animated.Text>
+          </View>
 
-      <ThemedView style={styles.authContainer}>
-        {isAuthenticated ? (
-          <>
-            <ThemedText type="subtitle">
-              Signed in as {user?.email ?? 'User'}
-            </ThemedText>
-            <Pressable style={styles.signOutButton} onPress={handleSignOut}>
-              <ThemedText style={styles.signOutButtonText}>Sign Out</ThemedText>
-            </Pressable>
-          </>
-        ) : (
-          <Pressable
-            style={[styles.spotifyButton, isSigningIn && styles.spotifyButtonDisabled]}
-            onPress={handleSpotifySignIn}
-            disabled={isSigningIn}
-          >
-            {isSigningIn ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <ThemedText style={styles.spotifyButtonText}>
-                Sign in with Spotify
-              </ThemedText>
-            )}
-          </Pressable>
-        )}
-      </ThemedView>
-
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+          {isAuthenticated ? (
+            <Animated.View
+              entering={FadeInUp.delay(300).duration(400)}
+              className="items-center gap-5"
+            >
+              <Text className="text-lg font-semibold text-white">
+                Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}
+              </Text>
+              <Pressable
+                className="py-3 px-8 rounded-full bg-surface-elevated border border-white/10 active:opacity-80"
+                onPress={handleSignOut}
+              >
+                <Text className="text-neutral-300 text-[15px] font-medium">
+                  Sign Out
+                </Text>
+              </Pressable>
+            </Animated.View>
+          ) : (
+            <Animated.View
+              entering={FadeInUp.delay(300).duration(400)}
+              className="items-center gap-6"
+            >
+              <Text className="text-[15px] text-neutral-500">
+                Sign in with Spotify to get started
+              </Text>
+              <Pressable
+                className={`py-4 px-12 rounded-full min-w-[280px] items-center justify-center bg-brand-primary active:scale-[0.98] ${
+                  isSigningIn ? 'opacity-70' : ''
+                }`}
+                onPress={handleSpotifySignIn}
+                disabled={isSigningIn}
+              >
+                {isSigningIn ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text className="text-white text-[17px] font-semibold">
+                    Sign in with Spotify
+                  </Text>
+                )}
+              </Pressable>
+            </Animated.View>
+          )}
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  authContainer: {
-    gap: 12,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  spotifyButton: {
-    backgroundColor: '#1DB954',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 50,
-    minWidth: 220,
-    alignItems: 'center',
-  },
-  spotifyButtonDisabled: {
-    opacity: 0.7,
-  },
-  spotifyButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  signOutButton: {
-    backgroundColor: '#333',
-    paddingVertical: 10,
-    paddingHorizontal: 24,
-    borderRadius: 50,
-  },
-  signOutButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});

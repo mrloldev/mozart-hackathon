@@ -5,7 +5,10 @@ import { supabase } from "./supabase";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const redirectUri = AuthSession.makeRedirectUri();
+const redirectUri = AuthSession.makeRedirectUri({
+  scheme: "remixer",
+  path: "auth/callback",
+});
 
 export async function signInWithSpotify() {
   try {
