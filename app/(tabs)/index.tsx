@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { Brand } from '@/constants/brand';
 import { useAuth } from '@/hooks/use-auth';
 import { signInWithSpotify, signOut } from '@/lib/auth';
 
 export default function WelcomeScreen() {
+  const router = useRouter();
   const { isAuthenticated, loading, user } = useAuth();
   const [isSigningIn, setIsSigningIn] = useState(false);
 
@@ -41,6 +43,14 @@ export default function WelcomeScreen() {
   return (
     <View className="flex-1 bg-surface">
       <SafeAreaView className="flex-1" edges={['top', 'bottom']}>
+        <View className="absolute top-12 right-6 z-10">
+          <Pressable
+            onPress={() => router.replace('/app')}
+            className="py-2 px-4 active:opacity-70"
+          >
+            <Text className="text-neutral-500 text-[15px]">Skip</Text>
+          </Pressable>
+        </View>
         <View className="flex-1 px-10 justify-center items-center">
           <View className="items-center mb-16">
             <Animated.Text

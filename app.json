@@ -41,7 +41,13 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Labi uses your location to show contextual recommendations for the place you're at."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

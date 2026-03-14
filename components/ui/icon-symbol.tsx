@@ -13,12 +13,30 @@ type IconSymbolName = keyof typeof MAPPING;
  * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
-const MAPPING = {
+const MAPPING: Record<string, ComponentProps<typeof MaterialIcons>['name']> = {
   'house.fill': 'home',
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
-} as IconMapping;
+  'play.fill': 'play-arrow',
+  'pause.fill': 'pause',
+  'chevron.down': 'expand-more',
+  'chevron.up': 'expand-less',
+  'backward.fill': 'skip-previous',
+  'forward.fill': 'skip-next',
+  'xmark': 'close',
+  'trash': 'delete',
+  'plus.circle': 'add-circle',
+  'figure.run': 'directions-run',
+  'laptopcomputer': 'laptop',
+  'car.fill': 'directions-car',
+  'cup.and.saucer.fill': 'local-cafe',
+  'location.fill': 'location-on',
+  'person.fill': 'person',
+  'frying.pan.fill': 'restaurant',
+  'leaf.fill': 'eco',
+  'scope': 'center-focus-strong',
+};
 
 /**
  * An icon component that uses native SF Symbols on iOS, and Material Icons on Android and web.
@@ -31,11 +49,11 @@ export function IconSymbol({
   color,
   style,
 }: {
-  name: IconSymbolName;
+  name: string;
   size?: number;
   color: string | OpaqueColorValue;
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name]} style={style} />;
+  return <MaterialIcons color={color} size={size} name={MAPPING[name] ?? 'music-note'} style={style} />;
 }
