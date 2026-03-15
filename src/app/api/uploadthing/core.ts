@@ -14,6 +14,7 @@ export const ourFileRouter = {
 
   songUpload: f({
     audio: { maxFileSize: "64MB", maxFileCount: 1 },
+    blob: { maxFileSize: "64MB", maxFileCount: 1 },
   })
     .middleware(async () => ({}))
     .onUploadComplete(async ({ file }) => {

@@ -195,7 +195,7 @@ export default function AdminPage() {
               </label>
               <input
                 type="file"
-                accept="audio/*"
+                accept=".webm,.mp3,audio/webm,audio/mpeg"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 className="w-full rounded-lg border border-dashed border-white/20 bg-white/5 px-4 py-3 text-sm text-white/70 file:mr-4 file:rounded file:border-0 file:bg-amber-500 file:px-4 file:py-2 file:text-black file:font-semibold"
               />
