@@ -1,17 +1,16 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { api } from "../../../convex/_generated/api";
-import { Id } from "../../../convex/_generated/dataModel";
 import { createDefaultPlayers } from "@/constants/game";
 import { randomTeamName } from "@/lib/names";
 import AppShell from "@/components/app-shell";
 import CreateTeamView from "@/components/create-team-view";
 import { saveRoomSession } from "@/lib/room-session";
 
-export default function JoinPage() {
+function JoinPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const codeFromUrl = searchParams.get("code")?.toUpperCase().slice(0, 6) ?? "";
@@ -94,5 +93,13 @@ export default function JoinPage() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+export default function JoinPage() {
+  return (
+    <Suspense fallback={null}>
+      <JoinPageContent />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
@@ -34,7 +34,7 @@ const REACTION_LABELS: Record<(typeof REACTIONS)[number], string> = {
   tomato: "🍅",
 };
 
-export default function WatchPage() {
+function WatchPageContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get("code")?.toUpperCase() ?? "";
   const [sessionId, setSessionId] = useState("");
@@ -324,5 +324,20 @@ export default function WatchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WatchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+          <p className="mt-4 text-white/60">Loading...</p>
+        </div>
+      </div>
+    }>
+      <WatchPageContent />
+    </Suspense>
   );
 }
