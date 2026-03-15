@@ -11,6 +11,10 @@ import {
   ArrowLeft,
   Check,
   SpinnerGap,
+  PencilSimple,
+  CaretDown,
+  CaretUp,
+  X,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useUploadThing } from "@/utils/uploadthing";
@@ -30,8 +34,15 @@ export default function AdminPage() {
     api.admin.listSongs,
     isAuthenticated ? { password } : "skip"
   );
+  const updateSong = useMutation(api.admin.updateSong);
   const deleteSong = useMutation(api.admin.deleteSong);
   const { startUpload } = useUploadThing("songUpload");
+
+  const [editingId, setEditingId] = useState<Id<"songs"> | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editLyrics, setEditLyrics] = useState("");
+  const [expandedId, setExpandedId] = useState<Id<"songs"> | null>(null);
+  const [savingId, setSavingId] = useState<Id<"songs"> | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,10 +87,41 @@ export default function AdminPage() {
     }
   };
 
+  const handleEdit = (song: { _id: Id<"songs">; title: string; lyrics: string }) => {
+    setEditingId(song._id);
+    setEditTitle(song.title);
+    setEditLyrics(song.lyrics);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditTitle("");
+    setEditLyrics("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingId || !editTitle.trim() || !editLyrics.trim()) return;
+    setSavingId(editingId);
+    try {
+      await updateSong({
+        password,
+        songId: editingId,
+        title: editTitle.trim(),
+        lyrics: editLyrics.trim(),
+      });
+      handleCancelEdit();
+    } catch {
+      alert("Failed to update");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   const handleDelete = async (songId: Id<"songs">) => {
     if (!confirm("Delete this song?")) return;
     try {
       await deleteSong({ password, songId });
+      if (editingId === songId) handleCancelEdit();
     } catch {
       alert("Failed to delete");
     }
@@ -195,7 +237,7 @@ export default function AdminPage() {
               </label>
               <input
                 type="file"
-                accept="audio/*"
+                accept=".webm,.mp3,audio/webm,audio/mpeg"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 className="w-full rounded-lg border border-dashed border-white/20 bg-white/5 px-4 py-3 text-sm text-white/70 file:mr-4 file:rounded file:border-0 file:bg-amber-500 file:px-4 file:py-2 file:text-black file:font-semibold"
               />
@@ -233,16 +275,94 @@ export default function AdminPage() {
               {listSongs?.map((song) => (
                 <li
                   key={song._id}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3"
+                  className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden"
                 >
-                  <span className="font-medium text-white">{song.title}</span>
-                  <button
-                    onClick={() => handleDelete(song._id)}
-                    className="rounded-lg p-2 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-400"
-                    title="Delete"
-                  >
-                    <Trash size={18} weight="bold" />
-                  </button>
+                  {editingId === song._id ? (
+                    <div className="p-4 space-y-4">
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-white/50">Title</label>
+                        <input
+                          type="text"
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-amber-400/50"
+                          placeholder="Song title"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-white/50">Lyrics</label>
+                        <textarea
+                          value={editLyrics}
+                          onChange={(e) => setEditLyrics(e.target.value)}
+                          rows={6}
+                          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-amber-400/50 resize-none"
+                          placeholder="Lyrics..."
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSaveEdit}
+                          disabled={savingId === song._id || !editTitle.trim() || !editLyrics.trim()}
+                          className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-amber-400 disabled:opacity-50"
+                        >
+                          {savingId === song._id ? (
+                            <SpinnerGap size={16} weight="bold" className="animate-spin" />
+                          ) : (
+                            <Check size={16} weight="bold" />
+                          )}
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          className="flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/5"
+                        >
+                          <X size={16} weight="bold" />
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        className="flex items-center justify-between px-4 py-3 cursor-pointer"
+                        onClick={() => setExpandedId(expandedId === song._id ? null : song._id)}
+                      >
+                        <span className="font-medium text-white">{song.title}</span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(song);
+                            }}
+                            className="rounded-lg p-2 text-white/40 transition-colors hover:bg-amber-500/20 hover:text-amber-400"
+                            title="Edit"
+                          >
+                            <PencilSimple size={18} weight="bold" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(song._id);
+                            }}
+                            className="rounded-lg p-2 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                            title="Delete"
+                          >
+                            <Trash size={18} weight="bold" />
+                          </button>
+                          {expandedId === song._id ? (
+                            <CaretUp size={18} className="text-white/40" />
+                          ) : (
+                            <CaretDown size={18} className="text-white/40" />
+                          )}
+                        </div>
+                      </div>
+                      {expandedId === song._id && (
+                        <div className="border-t border-white/10 px-4 py-3">
+                          <p className="text-sm text-white/70 whitespace-pre-wrap">{song.lyrics}</p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </li>
               ))}
             </ul>

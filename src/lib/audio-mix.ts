@@ -73,7 +73,7 @@ export async function mixBeatAndMelodyBlob(beatUrl: string, melodyBlob: Blob): P
     if (trimTo < buf.length) {
       const t = ctx.createBuffer(buf.numberOfChannels, trimTo, sampleRate);
       for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-        t.copyFromChannel(buf.getChannelData(ch), ch, 0, 0, trimTo);
+        buf.copyFromChannel(t.getChannelData(ch), ch, 0);
       }
       return t;
     }
@@ -115,7 +115,7 @@ export async function mixAudioUrls(urls: (string | null | undefined)[]): Promise
   }
   const withIndex = deduped
     .map((url, i) => ({ url, weight: TRACK_WEIGHTS[Math.min(i, TRACK_WEIGHTS.length - 1)] }))
-    .filter((t): t is { url: string; weight: number } => !!t.url?.length);
+    .filter((t): t is { url: string; weight: (typeof TRACK_WEIGHTS)[number] } => !!t.url?.length);
   if (withIndex.length === 0) throw new Error("No valid audio URLs");
 
   const ctx = new AudioContext();
@@ -132,7 +132,7 @@ export async function mixAudioUrls(urls: (string | null | undefined)[]): Promise
     if (trimTo < buf.length) {
       const trimmed = ctx.createBuffer(buf.numberOfChannels, trimTo, sampleRate);
       for (let ch = 0; ch < buf.numberOfChannels; ch++) {
-        trimmed.copyFromChannel(buf.getChannelData(ch), ch, 0, 0, trimTo);
+        buf.copyFromChannel(trimmed.getChannelData(ch), ch, 0);
       }
       buffers.push(trimmed);
     } else {
