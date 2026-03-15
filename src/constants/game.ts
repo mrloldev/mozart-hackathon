@@ -52,7 +52,7 @@ export const TEAM_COLORS = [
   },
 ];
 
-export const MAX_RECORDING_TIME = 30;
+export const MAX_RECORDING_TIME = 15;
 
 export const ROLE_CHALLENGE: Record<Role, string> = {
   beat: "Drop the beat that crushes the competition.",

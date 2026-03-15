@@ -196,25 +196,25 @@ export default function WaitingRoomView({
           {/* QR codes */}
           {isHost && (
             <motion.div
-              className="mt-5 flex justify-center gap-4"
+              className="mt-5 flex justify-center gap-6"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
             >
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="rounded-xl bg-white p-2">
-                  <QRCodeSVG value={shareUrl} size={72} fgColor="#050507" bgColor="#ffffff" level="M" />
+              <div className="flex flex-col items-center gap-2">
+                <div className="rounded-xl bg-white p-3">
+                  <QRCodeSVG value={shareUrl} size={140} fgColor="#050507" bgColor="#ffffff" level="M" />
                 </div>
-                <span className="text-[8px] font-bold uppercase tracking-widest text-white/20">Join</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-white/25">Join</span>
               </div>
               {room.isPublic && (
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="rounded-xl bg-white p-2">
-                    <QRCodeSVG value={audienceUrl} size={72} fgColor="#050507" bgColor="#ffffff" level="M" />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="rounded-xl bg-white p-3">
+                    <QRCodeSVG value={audienceUrl} size={140} fgColor="#050507" bgColor="#ffffff" level="M" />
                   </div>
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/20">Watch</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/25">Watch</span>
                   {audienceCount !== undefined && (
-                    <span className="text-[9px] font-bold text-cyan-400/50">{audienceCount} watching</span>
+                    <span className="text-[10px] font-bold text-cyan-400/50">{audienceCount} watching</span>
                   )}
                 </div>
               )}
