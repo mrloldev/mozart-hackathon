@@ -19,6 +19,7 @@ import { getRoomSessionForCode } from "@/lib/room-session";
 import { useUploadThing } from "@/utils/uploadthing";
 import { mixBeatAndMelodyBlob } from "@/lib/audio-mix";
 import { ROLES, TEAM_COLORS } from "@/constants/game";
+import SongPlayer from "@/components/song-player";
 
 function HostQROverlay({ code, bothTeams }: { code: string; bothTeams: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -95,6 +96,7 @@ function HostSpectatorView({ room, code }: { room: any; code: string }) {
   }
 
   const lyrics = room.song?.lyrics ?? null;
+  const audioUrl = room.song?.audioUrl ?? null;
 
   return (
     <motion.div
@@ -132,11 +134,14 @@ function HostSpectatorView({ room, code }: { room: any; code: string }) {
         />
       )}
 
-      {lyrics && (
+      {(lyrics || audioUrl) && (
         <div className="rounded-lg border border-white/8 bg-white/5 p-4">
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/60 md:text-base">
-            {lyrics}
-          </p>
+          {audioUrl && <SongPlayer src={audioUrl} />}
+          {lyrics && (
+            <p className={`whitespace-pre-wrap text-sm leading-relaxed text-white/60 md:text-base ${audioUrl ? "mt-4" : ""}`}>
+              {lyrics}
+            </p>
+          )}
         </div>
       )}
     </motion.div>

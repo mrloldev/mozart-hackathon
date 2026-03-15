@@ -9,6 +9,7 @@ import GameTopBar from "./game-top-bar";
 import TeamCard from "./team-card";
 import RecordingControls from "./recording-controls";
 import ResultsView from "./results-view";
+import SongPlayer from "./song-player";
 
 interface RoomSong {
   title: string;
@@ -51,8 +52,7 @@ export default function GameView({
   onRecordComplete: (playerId: Id<"players">, blob: Blob) => Promise<void>;
 }) {
   const skipTurnMutation = useMutation(api.rooms.skipTurn);
-  const showSkipButton =
-    process.env.NEXT_PUBLIC_VERCEL_ENV !== "production";
+  const showSkipButton = process.env.NEXT_PUBLIC_VERCEL_ENV !== "production";
 
   const audienceCount = useQuery(
     api.audience.getAudienceCount,
@@ -106,10 +106,11 @@ export default function GameView({
   );
 
   const lyrics = room.song?.lyrics ?? null;
+  const audioUrl = room.song?.audioUrl ?? null;
 
-  const teamsBlock = (
+  const renderTeams = (teams: RoomTeam[]) => (
     <div className="grid shrink-0 gap-3 md:grid-cols-1">
-      {orderedTeams.map((team) => {
+      {teams.map((team) => {
         const cIdx = colorIndexFor(team);
         const isActiveTeam = team._id === currentTeam?._id;
         const colors = TEAM_COLORS[cIdx];
@@ -225,6 +226,8 @@ export default function GameView({
     </div>
   );
 
+  const myTeamOnly = myTeam ? [myTeam] : orderedTeams;
+
   return (
     <motion.div
       className="flex min-h-0 flex-1 flex-col gap-2"
@@ -234,39 +237,49 @@ export default function GameView({
     >
       {topBar}
 
-      {/* Mobile: stacked */}
+      {/* Mobile: stacked — team first, then song/lyrics */}
       <div className="flex min-h-0 flex-1 flex-col gap-2 md:hidden">
-        {lyrics && (
+        {renderTeams(myTeamOnly)}
+        {(lyrics || audioUrl) && (
           <motion.div
             className="min-h-0 shrink overflow-y-auto rounded-lg border border-white/8 bg-white/5 p-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
           >
-            <p className="whitespace-pre-wrap text-center text-sm leading-relaxed text-white/50">
-              {lyrics}
-            </p>
+            {audioUrl && <SongPlayer src={audioUrl} />}
+            {lyrics && (
+              <p
+                className={`whitespace-pre-wrap text-center text-sm leading-relaxed text-white/50 ${audioUrl ? "mt-3" : ""}`}
+              >
+                {lyrics}
+              </p>
+            )}
           </motion.div>
         )}
-        {teamsBlock}
       </div>
 
       {/* Desktop: side by side — lyrics left, teams right */}
       <div className="hidden min-h-0 flex-1 gap-4 md:flex mt-8">
-        {lyrics && (
+        {(lyrics || audioUrl) && (
           <motion.div
-            className="flex-1 h-fit overflow-y-auto rounded-lg border border-white/8 bg-white/5 p-4 w-fit"
+            className="min-w-0 flex-1 h-fit overflow-y-auto rounded-lg border border-white/8 bg-white/5 p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
           >
-            <p className="whitespace-pre-wrap text-base leading-relaxed text-white/50 px-0 mx-0 w-fit">
-              {lyrics}
-            </p>
+            {audioUrl && <SongPlayer src={audioUrl} />}
+            {lyrics && (
+              <p
+                className={`whitespace-pre-wrap text-base leading-relaxed text-white/50 ${audioUrl ? "mt-4" : ""}`}
+              >
+                {lyrics}
+              </p>
+            )}
           </motion.div>
         )}
         <div className="flex w-[420px] shrink-0 flex-col gap-3">
-          {teamsBlock}
+          {renderTeams(orderedTeams)}
         </div>
       </div>
     </motion.div>
