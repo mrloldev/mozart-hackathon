@@ -273,6 +273,7 @@ export default function RoomPage() {
               roomId={room._id}
               team0Id={room.teams[0]?._id}
               team1Id={room.teams[1]?._id}
+              direction="down"
             />
           )}
         </AppShell>
@@ -297,6 +298,7 @@ export default function RoomPage() {
             roomId={room._id}
             team0Id={room.teams[0]?._id}
             team1Id={room.teams[1]?._id}
+            direction="down"
           />
         )}
 
