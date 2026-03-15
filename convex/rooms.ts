@@ -212,9 +212,10 @@ export const getRoom = query({
           instrumentalUrl ? null : rawMelody,
           vocalsUrl,
         ];
+        const rawTrackUrls: (string | null)[] = [rawMelody, null, vocalsUrl];
         const hasInstrumental = !!instrumentalUrl;
         const combinedMixUrl = combinedMixGen?.fileUrl ?? null;
-        return { ...team, players: playersWithUrls, trackUrls, hasInstrumental, combinedMixUrl };
+        return { ...team, players: playersWithUrls, trackUrls, rawTrackUrls, hasInstrumental, combinedMixUrl };
       })
     );
 
@@ -365,6 +366,23 @@ export const recordComplete = mutation({
         role: player.role,
         createdAt: Date.now(),
       });
+    }
+
+    if (player.role === "vocals" && args.fileUrl) {
+      const instrumentalGen = await ctx.db
+        .query("generations")
+        .withIndex("by_room_team_type", (q) =>
+          q.eq("roomId", args.roomId).eq("teamId", player.teamId).eq("type", "instrumental")
+        )
+        .first();
+      if (instrumentalGen?.fileUrl) {
+        await workflow.start(ctx, internal.workflows.combinedMixWorkflow, {
+          roomId: args.roomId,
+          teamId: player.teamId,
+          instrumentalUrl: instrumentalGen.fileUrl,
+          vocalsUrl: args.fileUrl,
+        });
+      }
     }
 
     const room = await ctx.db.get(args.roomId);
@@ -557,43 +575,6 @@ export const updateGeneratedInstrumental = internalMutation({
         prompt: args.prompt,
         createdAt: Date.now(),
       });
-    }
-
-    const players = await ctx.db
-      .query("players")
-      .withIndex("by_team", (q) => q.eq("teamId", args.teamId))
-      .collect();
-    for (const p of players) {
-      if (p.role === "beat" || p.role === "melody") {
-        await ctx.db.patch(p._id, { recordingUrl: args.fileUrl });
-      }
-    }
-
-    for (const role of ["beat", "melody"] as const) {
-      const existing = await ctx.db
-        .query("recordings")
-        .withIndex("by_room_team_role", (q) =>
-          q.eq("roomId", args.roomId).eq("teamId", args.teamId).eq("role", role)
-        )
-        .first();
-      if (existing) {
-        await ctx.db.patch(existing._id, { fileUrl: args.fileUrl, prompt: args.prompt });
-      } else {
-        const beatPlayer = players.find((p) => p.role === "beat");
-        const melodyPlayer = players.find((p) => p.role === "melody");
-        const playerId = role === "beat" ? beatPlayer?._id : melodyPlayer?._id;
-        if (playerId) {
-          await ctx.db.insert("recordings", {
-            roomId: args.roomId,
-            teamId: args.teamId,
-            playerId,
-            fileUrl: args.fileUrl,
-            role,
-            prompt: args.prompt,
-            createdAt: Date.now(),
-          });
-        }
-      }
     }
 
     const vocalsRecording = await ctx.db

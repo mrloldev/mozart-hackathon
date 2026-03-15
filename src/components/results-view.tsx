@@ -22,6 +22,7 @@ interface Team {
   name: string;
   players: TeamPlayer[];
   trackUrls?: (string | null)[];
+  rawTrackUrls?: (string | null)[];
   hasInstrumental?: boolean;
   combinedMixUrl?: string | null;
 }
@@ -143,9 +144,34 @@ export default function ResultsView({
     rafRef.current = requestAnimationFrame(tick);
   }, []);
 
-  const handlePlayCombined = useCallback(
+  const handlePlayRaw = useCallback(
     async (team: Team) => {
-      const key = `combined-${team._id}`;
+      const key = `raw-${team._id}`;
+      if (playingKey === key) { stopAll(); return; }
+      stopAll();
+      setPlayingKey(key);
+      try {
+        const urls = team.rawTrackUrls ?? getUrlsForTeam(team);
+        if (!urls.some((u) => u != null && u.length > 0)) { stopAll(); return; }
+        const blob = await mixTrackUrls(urls);
+        if (!blob.size) throw new Error("Empty mix");
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => { URL.revokeObjectURL(url); stopAll(); };
+        await audio.play();
+        startProgressTracking(audio);
+      } catch (err) {
+        console.error("[ResultsView] Raw mix failed:", err);
+        stopAll();
+      }
+    },
+    [playingKey, stopAll, startProgressTracking]
+  );
+
+  const handlePlayAI = useCallback(
+    async (team: Team) => {
+      const key = `ai-${team._id}`;
       if (playingKey === key) { stopAll(); return; }
       stopAll();
       setPlayingKey(key);
@@ -169,7 +195,7 @@ export default function ResultsView({
           startProgressTracking(audio);
         }
       } catch (err) {
-        console.error("[ResultsView] Combined mix failed:", err);
+        console.error("[ResultsView] AI mix failed:", err);
         stopAll();
       }
     },
@@ -290,11 +316,15 @@ export default function ResultsView({
             const colors = TEAM_COLORS[originalIndex] ?? TEAM_COLORS[0];
             const teamVotes = voteTally ? (voteTally[team._id] ?? 0) : 0;
             const isWinner = originalIndex === winnerIndex && total > 0;
-            const combinedKey = `combined-${team._id}`;
-            const isCombinedPlaying = playingKey === combinedKey;
+            const rawKey = `raw-${team._id}`;
+            const aiKey = `ai-${team._id}`;
+            const isRawPlaying = playingKey === rawKey;
+            const isAIPlaying = playingKey === aiKey;
             const urlsForTeam = team.trackUrls ?? getTrackUrls(team.players);
+            const rawUrls = team.rawTrackUrls ?? urlsForTeam;
             const hasTrack = urlsForTeam.some((u) => u != null && u.length > 0);
-            const canShowCombinedMix = !!team.combinedMixUrl || (team.hasInstrumental === true && hasTrack);
+            const hasRawTracks = rawUrls.some((u) => u != null && u.length > 0);
+            const canShowAIMix = !!team.combinedMixUrl || (team.hasInstrumental === true && hasTrack);
 
             return (
               <motion.div
@@ -343,19 +373,29 @@ export default function ResultsView({
 
                   {hasTrack && (
                     <>
-                      {canShowCombinedMix && (
+                      {hasRawTracks && (
                         <MiniPlayer
-                          label="Combined Mix"
+                          label="Raw Mix"
                           color={colors.bgColor}
-                          isPlaying={isCombinedPlaying}
-                          progress={isCombinedPlaying ? progress : 0}
-                          duration={isCombinedPlaying ? duration : 0}
-                          onToggle={() => handlePlayCombined(team)}
+                          isPlaying={isRawPlaying}
+                          progress={isRawPlaying ? progress : 0}
+                          duration={isRawPlaying ? duration : 0}
+                          onToggle={() => handlePlayRaw(team)}
+                        />
+                      )}
+                      {canShowAIMix && (
+                        <MiniPlayer
+                          label="AI Mix"
+                          color={colors.bgColor}
+                          isPlaying={isAIPlaying}
+                          progress={isAIPlaying ? progress : 0}
+                          duration={isAIPlaying ? duration : 0}
+                          onToggle={() => handlePlayAI(team)}
                         />
                       )}
                       <div className="mt-3 space-y-2 rounded-lg border border-white/6 bg-black/20 p-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
-                          Track record
+                          Individual tracks
                         </p>
                         {ROLE_ORDER.map((role) => {
                           const url = urlsForTeam[ROLE_ORDER.indexOf(role)];
@@ -363,7 +403,7 @@ export default function ResultsView({
                           const soloKey = `solo-${team._id}-${role}`;
                           const isSoloPlaying = playingKey === soloKey;
                           const prog =
-                            (isCombinedPlaying || isSoloPlaying) && duration > 0
+                            isSoloPlaying && duration > 0
                               ? progress / duration
                               : 0;
                           return (
