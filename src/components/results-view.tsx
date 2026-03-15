@@ -166,6 +166,27 @@ export default function ResultsView({
     [playingKey, stopAll, startProgressTracking]
   );
 
+  const handlePlaySolo = useCallback(
+    (team: Team, role: "beat" | "melody" | "vocals") => {
+      const key = `solo-${team._id}-${role}`;
+      if (playingKey === key) { stopAll(); return; }
+      stopAll();
+      const urls = getUrlsForTeam(team);
+      const roleIndex = ROLE_ORDER.indexOf(role);
+      const url = urls[roleIndex];
+      if (!url?.length) return;
+      setPlayingKey(key);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => stopAll();
+      audio.play().then(() => startProgressTracking(audio)).catch((err) => {
+        console.error("[ResultsView] Solo play failed:", err);
+        stopAll();
+      });
+    },
+    [playingKey, stopAll, startProgressTracking]
+  );
+
   const team0 = room.teams[0];
   const team1 = room.teams[1];
   const votes0 = voteTally && team0 ? (voteTally[team0._id] ?? 0) : 0;
@@ -326,16 +347,31 @@ export default function ResultsView({
                         {ROLE_ORDER.map((role) => {
                           const url = urlsForTeam[ROLE_ORDER.indexOf(role)];
                           if (!url) return null;
+                          const soloKey = `solo-${team._id}-${role}`;
+                          const isSoloPlaying = playingKey === soloKey;
                           const prog =
-                            isCombinedPlaying && duration > 0
+                            (isCombinedPlaying || isSoloPlaying) && duration > 0
                               ? progress / duration
                               : 0;
                           return (
-                            <div
+                            <button
                               key={role}
-                              className="flex items-center gap-3"
+                              type="button"
+                              onClick={() => handlePlaySolo(team, role)}
+                              className="flex w-full items-center gap-3 rounded-lg p-2 -m-2 transition-colors hover:bg-white/5 active:scale-[0.99]"
                             >
-                              <span className="w-14 shrink-0 text-xs font-medium text-white/60">
+                              <div
+                                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${
+                                  isSoloPlaying ? "bg-white/15 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
+                                }`}
+                              >
+                                {isSoloPlaying ? (
+                                  <Stop size={12} weight="fill" />
+                                ) : (
+                                  <Play size={12} weight="fill" />
+                                )}
+                              </div>
+                              <span className="w-14 shrink-0 text-left text-xs font-medium text-white/60">
                                 {ROLE_LABELS[role]}
                               </span>
                               <div className="min-w-0 flex-1">
@@ -351,7 +387,7 @@ export default function ResultsView({
                                   }
                                 />
                               </div>
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
