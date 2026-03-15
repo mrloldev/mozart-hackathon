@@ -9,12 +9,18 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@convex-dev/workflow": "^0.3.6",
+    "@convex-dev/workpool": "^0.4.2",
     "@phosphor-icons/react": "^2.1.10",
+    "@uploadthing/react": "^7.3.3",
     "convex": "^1.33.1",
+    "convex-helpers": "^0.1.114",
+    "framer-motion": "^12.36.0",
     "next": "16.1.6",
     "qrcode.react": "^4.2.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "uploadthing": "^7.7.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
