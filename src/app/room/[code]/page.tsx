@@ -57,21 +57,21 @@ function HostQROverlay({ code, bothTeams }: { code: string; bothTeams: boolean }
   }
 
   return (
-    <div className="mx-auto mb-4 flex max-w-lg items-center justify-center gap-6 rounded-xl border border-white/10 bg-black/40 p-4 backdrop-blur-md">
-      <div className="flex flex-col items-center gap-1.5">
-        <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">JOIN</p>
-        <div className="rounded-lg border border-white/10 bg-white p-2">
-          <QRCodeSVG value={joinUrl} size={100} fgColor="#070708" bgColor="#ffffff" level="M" />
+    <div className="mx-auto mb-4 flex max-w-2xl items-center justify-between rounded-xl border border-white/10 bg-black/40 p-6 backdrop-blur-md">
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">JOIN</p>
+        <div className="rounded-lg border border-white/10 bg-white p-3">
+          <QRCodeSVG value={joinUrl} size={180} fgColor="#070708" bgColor="#ffffff" level="M" />
         </div>
       </div>
       <div className="flex flex-col items-center gap-1">
         <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">CODE</p>
-        <p className="font-display text-2xl font-black tracking-widest text-[var(--accent-primary)]">{code}</p>
+        <p className="font-display text-3xl font-black tracking-widest text-[var(--accent-primary)]">{code}</p>
       </div>
-      <div className="flex flex-col items-center gap-1.5">
-        <p className="text-[9px] font-bold uppercase tracking-widest text-white/40">WATCH</p>
-        <div className="rounded-lg border border-white/10 bg-white p-2">
-          <QRCodeSVG value={watchUrl} size={100} fgColor="#070708" bgColor="#ffffff" level="M" />
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">WATCH</p>
+        <div className="rounded-lg border border-white/10 bg-white p-3">
+          <QRCodeSVG value={watchUrl} size={180} fgColor="#070708" bgColor="#ffffff" level="M" />
         </div>
       </div>
     </div>
@@ -136,7 +136,7 @@ function HostSpectatorView({ room, code }: { room: any; code: string }) {
 
       {(lyrics || audioUrl) && (
         <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-          {audioUrl && <SongPlayer src={audioUrl} />}
+          {audioUrl && <SongPlayer src={audioUrl} singlePlay={room.singlePlay} />}
           {lyrics && (
             <p className={`whitespace-pre-wrap text-sm leading-relaxed text-white/40 md:text-base ${audioUrl ? "mt-4" : ""}`}>
               {lyrics}

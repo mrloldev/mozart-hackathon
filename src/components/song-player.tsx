@@ -10,8 +10,9 @@ function formatTime(s: number): string {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
-export default function SongPlayer({ src }: { src: string }) {
+export default function SongPlayer({ src, singlePlay }: { src: string; singlePlay?: boolean }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasPlayed, setHasPlayed] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -28,14 +29,20 @@ export default function SongPlayer({ src }: { src: string }) {
 
   useEffect(() => () => stop(), [stop]);
 
+  const disabled = singlePlay && hasPlayed && !isPlaying;
+
   const toggle = useCallback(() => {
     if (isPlaying) {
       stop();
       return;
     }
+    if (singlePlay && hasPlayed) return;
     const audio = new Audio(src);
     audioRef.current = audio;
-    audio.onended = stop;
+    audio.onended = () => {
+      stop();
+      if (singlePlay) setHasPlayed(true);
+    };
     audio
       .play()
       .then(() => {
@@ -48,14 +55,15 @@ export default function SongPlayer({ src }: { src: string }) {
         rafRef.current = requestAnimationFrame(tick);
       })
       .catch(stop);
-  }, [isPlaying, src, stop]);
+  }, [isPlaying, src, stop, singlePlay, hasPlayed]);
 
   const prog = duration > 0 ? (progress / duration) * 100 : 0;
 
   return (
     <button
       onClick={toggle}
-      className="flex w-full items-center gap-3 rounded-xl border border-white/6 bg-white/[0.03] p-2.5 transition-all hover:bg-white/[0.06] active:scale-[0.98]"
+      disabled={disabled}
+      className={`flex w-full items-center gap-3 rounded-xl border border-white/6 bg-white/[0.03] p-2.5 transition-all active:scale-[0.98] ${disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/[0.06]"}`}
     >
       <motion.div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-all ${
@@ -72,7 +80,7 @@ export default function SongPlayer({ src }: { src: string }) {
       </motion.div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-white/50">{isPlaying ? "Playing..." : "Tap to play"}</span>
+          <span className="text-xs font-bold text-white/50">{disabled ? "Already played" : isPlaying ? "Playing..." : "Tap to play"}</span>
           {duration > 0 && (
             <span className="text-[10px] font-bold tabular-nums text-white/25">
               {isPlaying ? formatTime(progress) : formatTime(duration)}

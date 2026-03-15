@@ -288,7 +288,7 @@ export default function RecordingControls({
       <AnimatePresence>
         {isRecording && streamRef.current && (
           <motion.div
-            className="fixed inset-x-0 bottom-[8%] z-40 h-[120px] overflow-hidden"
+            className="pointer-events-none fixed inset-x-0 bottom-[8%] z-40 h-[120px] overflow-hidden"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 30 }}

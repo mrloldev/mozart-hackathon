@@ -152,7 +152,7 @@ export default function ResultsView({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col items-center overflow-y-auto overflow-x-hidden">
-      <div className="w-full max-w-lg px-4 py-6 pb-12 lg:max-w-4xl">
+      <div className="w-[70vw] max-w-4xl px-4 py-6 pb-12">
 
         {/* ═══ DRAMATIC RESULT HEADER ═══ */}
         <motion.div

@@ -41,6 +41,7 @@ interface Room {
   teams: RoomTeam[];
   song?: RoomSong | null;
   isPublic?: boolean;
+  singlePlay?: boolean;
 }
 
 function SongSection({
@@ -48,11 +49,13 @@ function SongSection({
   audioUrl,
   lyrics,
   compact,
+  singlePlay,
 }: {
   songTitle: string | null;
   audioUrl: string | null;
   lyrics: string | null;
   compact?: boolean;
+  singlePlay?: boolean;
 }) {
   if (!songTitle && !audioUrl && !lyrics) return null;
 
@@ -74,7 +77,7 @@ function SongSection({
       </div>
       {audioUrl && (
         <div className="border-b border-white/5 px-3 py-2">
-          <SongPlayer src={audioUrl} />
+          <SongPlayer src={audioUrl} singlePlay={singlePlay} />
         </div>
       )}
       {lyrics && (
@@ -155,7 +158,7 @@ export default function GameView({
             >
               {/* ── Song section — TOP ── */}
               <div className="shrink-0 px-1">
-                <SongSection songTitle={songTitle} audioUrl={audioUrl} lyrics={lyrics} compact />
+                <SongSection songTitle={songTitle} audioUrl={audioUrl} lyrics={lyrics} compact singlePlay={room.singlePlay} />
               </div>
 
               {/* ── Your turn + recording — CENTER ── */}
@@ -210,7 +213,7 @@ export default function GameView({
             >
               {/* Song at top for opponent turn too */}
               <div className="shrink-0 px-1">
-                <SongSection songTitle={songTitle} audioUrl={audioUrl} lyrics={lyrics} compact />
+                <SongSection songTitle={songTitle} audioUrl={audioUrl} lyrics={lyrics} compact singlePlay={room.singlePlay} />
               </div>
 
               {/* Opponent recording indicator */}
@@ -267,7 +270,7 @@ export default function GameView({
 
               {/* Full-width waveform — subtle animated since we don't have opponent's stream */}
               {currentTeam?.isConnected !== false && (
-                <div className="fixed inset-x-0 bottom-[8%] z-40 flex h-[80px] items-end justify-center overflow-hidden">
+                <div className="pointer-events-none fixed inset-x-0 bottom-[8%] z-40 flex h-[80px] items-end justify-center overflow-hidden">
                   <div className={`absolute inset-0 ${opponentIndex === 0 ? "bg-gradient-to-t from-cyan-500/6 via-transparent to-transparent" : "bg-gradient-to-t from-orange-500/6 via-transparent to-transparent"}`} />
                   <div className="relative flex w-full items-end justify-center gap-[3px] px-2 pb-2">
                     {Array.from({ length: 64 }).map((_, i) => (
@@ -303,7 +306,7 @@ export default function GameView({
                 </div>
                 {audioUrl && (
                   <div className="mt-3">
-                    <SongPlayer src={audioUrl} />
+                    <SongPlayer src={audioUrl} singlePlay={room.singlePlay} />
                   </div>
                 )}
               </div>

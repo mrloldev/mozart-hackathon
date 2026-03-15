@@ -18,6 +18,7 @@ export const createRoom = mutation({
     teamName: v.optional(v.string()),
     isClassicMode: v.optional(v.boolean()),
     isPublic: v.optional(v.boolean()),
+    singlePlay: v.optional(v.boolean()),
     players: v.optional(
       v.array(
         v.object({
@@ -52,6 +53,7 @@ export const createRoom = mutation({
       createdAt: Date.now(),
       isClassicMode: args.isClassicMode ?? false,
       isPublic: args.isPublic ?? false,
+      singlePlay: args.singlePlay ?? false,
     });
 
     if (!hostIsPlaying) {

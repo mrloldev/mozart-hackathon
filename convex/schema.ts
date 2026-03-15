@@ -15,6 +15,7 @@ export default defineSchema({
     hostTeamId: v.string(),
     isClassicMode: v.optional(v.boolean()),
     isPublic: v.optional(v.boolean()),
+    singlePlay: v.optional(v.boolean()),
     songId: v.optional(v.id("songs")),
     phase: v.union(
       v.literal("waiting"),

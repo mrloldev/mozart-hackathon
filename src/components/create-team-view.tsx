@@ -23,6 +23,8 @@ export default function CreateTeamView({
   joinCode,
   isPublic,
   setIsPublic,
+  singlePlay,
+  setSinglePlay,
   hideBackInStep1,
 }: {
   teamName: string;
@@ -35,6 +37,8 @@ export default function CreateTeamView({
   joinCode?: string;
   isPublic?: boolean;
   setIsPublic?: (v: boolean) => void;
+  singlePlay?: boolean;
+  setSinglePlay?: (v: boolean) => void;
   hideBackInStep1?: boolean;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
@@ -178,6 +182,17 @@ export default function CreateTeamView({
                 className="h-5 w-5 accent-cyan-400"
               />
               <span className="text-sm font-bold text-white/50">Public game (audience can watch & vote)</span>
+            </label>
+          )}
+          {!joinCode && setSinglePlay !== undefined && (
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-white/4 p-4 transition-colors hover:bg-white/6">
+              <input
+                type="checkbox"
+                checked={singlePlay ?? false}
+                onChange={(e) => setSinglePlay(e.target.checked)}
+                className="h-5 w-5 accent-cyan-400"
+              />
+              <span className="text-sm font-bold text-white/50">Single play (song can only be played once)</span>
             </label>
           )}
 

@@ -19,6 +19,7 @@ export default function CreatePage() {
   const [teamName, setTeamName] = useState(randomTeamName);
   const [players, setPlayers] = useState(createDefaultPlayers);
   const [isPublic, setIsPublic] = useState(false);
+  const [singlePlay, setSinglePlay] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   const createRoom = useMutation(api.rooms.createRoom);
@@ -29,6 +30,7 @@ export default function CreatePage() {
         isHostPlaying: false,
         isClassicMode: true,
         isPublic,
+        singlePlay,
       });
       saveRoomSession({
         code: result.code,
@@ -54,6 +56,7 @@ export default function CreatePage() {
         teamName,
         isClassicMode: true,
         isPublic,
+        singlePlay,
         players: players.map((p) => ({
           name: p.name,
           avatarUrl: p.avatarUrl,
@@ -154,6 +157,15 @@ export default function CreatePage() {
               />
               <span className="text-sm font-bold text-white/50">Public game (audience can watch & vote)</span>
             </label>
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl bg-white/4 p-4 transition-colors hover:bg-white/6">
+              <input
+                type="checkbox"
+                checked={singlePlay}
+                onChange={(e) => setSinglePlay(e.target.checked)}
+                className="h-5 w-5 accent-cyan-400"
+              />
+              <span className="text-sm font-bold text-white/50">Single play (song can only be played once)</span>
+            </label>
             <Button size="xl" onClick={handleCreateHostOnly} fullWidth>
               Create Room
             </Button>
@@ -174,6 +186,8 @@ export default function CreatePage() {
           setPlayers={setPlayers}
           isPublic={isPublic}
           setIsPublic={setIsPublic}
+          singlePlay={singlePlay}
+          setSinglePlay={setSinglePlay}
           onBack={() => setHostChoice(null)}
           onSubmit={handleCreateRoom}
           submitLabel="Create Room"
