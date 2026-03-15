@@ -24,6 +24,8 @@ export const TEAM_COLORS = [
   { color: "text-orange-400", bgColor: "bg-orange-600", ring: "ring-orange-500/60", border: "border-orange-500/40" },
 ];
 
+export const MAX_RECORDING_TIME = 30;
+
 export const ROLE_CHALLENGE: Record<Role, string> = {
   beat: "Drop the beat that crushes the competition.",
   melody: "Craft the melody that steals the show.",

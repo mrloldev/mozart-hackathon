@@ -106,6 +106,56 @@ export const startInstrumentalGeneration = mutation({
   },
 });
 
+export const vocalsWorkflow = workflow.define({
+  args: {
+    roomId: v.id("rooms"),
+    teamId: v.id("teams"),
+    playerId: v.id("players"),
+    prompt: v.optional(v.string()),
+    userRecordingUrl: v.string(),
+  },
+  handler: async (step, args): Promise<void> => {
+    console.log("[vocalsWorkflow] Started", { roomId: args.roomId, teamId: args.teamId, playerId: args.playerId });
+
+    const taskId = await step.runAction(
+      internal.actions.sunoUploadAndCover,
+      { uploadUrl: args.userRecordingUrl, role: "vocals" },
+      { retry: true }
+    );
+    console.log("[vocalsWorkflow] Suno vocals generation started", { taskId });
+
+    const fileUrl = await step.runAction(
+      internal.actions.sunoPollDownloadAndUpload,
+      { taskId, role: "vocals" },
+      { retry: false }
+    );
+    console.log("[vocalsWorkflow] Suno vocals downloaded and uploaded", { fileUrl });
+
+    await step.runMutation(internal.rooms.updateGeneratedAudio, {
+      roomId: args.roomId,
+      teamId: args.teamId,
+      playerId: args.playerId,
+      fileUrl,
+      role: "vocals",
+      prompt: args.prompt,
+    });
+    console.log("[vocalsWorkflow] Completed");
+  },
+});
+
+export const startVocalsGeneration = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    teamId: v.id("teams"),
+    playerId: v.id("players"),
+    prompt: v.optional(v.string()),
+    userRecordingUrl: v.string(),
+  },
+  handler: async (ctx, args): Promise<string> => {
+    return await workflow.start(ctx, internal.workflows.vocalsWorkflow, args);
+  },
+});
+
 export const startMelodyGeneration = mutation({
   args: {
     roomId: v.id("rooms"),
@@ -118,3 +168,33 @@ export const startMelodyGeneration = mutation({
     return await workflow.start(ctx, internal.workflows.melodyWorkflow, args);
   },
 });
+
+export const combinedMixWorkflow = workflow.define({
+  args: {
+    roomId: v.id("rooms"),
+    teamId: v.id("teams"),
+    instrumentalUrl: v.string(),
+    vocalsUrl: v.string(),
+  },
+  handler: async (step, args): Promise<void> => {
+    console.log("[combinedMixWorkflow] Started", {
+      roomId: args.roomId,
+      teamId: args.teamId,
+    });
+
+    const fileUrl = await step.runAction(
+      internal.actions.falComposeAudio,
+      { instrumentalUrl: args.instrumentalUrl, vocalsUrl: args.vocalsUrl },
+      { retry: true }
+    );
+    console.log("[combinedMixWorkflow] Composed and uploaded", { fileUrl });
+
+    await step.runMutation(internal.rooms.updateCombinedMix, {
+      roomId: args.roomId,
+      teamId: args.teamId,
+      fileUrl,
+    });
+    console.log("[combinedMixWorkflow] Completed");
+  },
+});
+

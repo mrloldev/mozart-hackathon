@@ -12,7 +12,7 @@ async function decodePeaks(url: string, bars: number): Promise<number[]> {
   ctx.close();
 
   const ch0 = buf.getChannelData(0);
-  const totalSamples = Math.min(buf.length, Math.floor(15 * buf.sampleRate));
+  const totalSamples = Math.min(buf.length, Math.floor(30 * buf.sampleRate));
   const samplesPerBar = Math.floor(totalSamples / bars);
   const peaks: number[] = [];
 

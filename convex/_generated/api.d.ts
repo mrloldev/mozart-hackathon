@@ -12,6 +12,7 @@ import type * as actions from "../actions.js";
 import type * as admin from "../admin.js";
 import type * as audience from "../audience.js";
 import type * as crons from "../crons.js";
+import type * as lib_fal from "../lib/fal.js";
 import type * as lib_suno from "../lib/suno.js";
 import type * as migrations from "../migrations.js";
 import type * as rooms from "../rooms.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   audience: typeof audience;
   crons: typeof crons;
+  "lib/fal": typeof lib_fal;
   "lib/suno": typeof lib_suno;
   migrations: typeof migrations;
   rooms: typeof rooms;

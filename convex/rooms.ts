@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { workflow } from "./workflow";
 
 function generateRoomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -156,7 +158,7 @@ export const getRoom = query({
 
     const teamsWithPlayers = await Promise.all(
       teams.map(async (team) => {
-        const [players, recordings] = await Promise.all([
+        const [players, recordings, instrumentalGen, combinedMixGen] = await Promise.all([
           ctx.db.query("players").withIndex("by_team", (q) => q.eq("teamId", team._id)).collect(),
           ctx.db
             .query("recordings")
@@ -164,6 +166,18 @@ export const getRoom = query({
               q.eq("roomId", room._id).eq("teamId", team._id)
             )
             .collect(),
+          ctx.db
+            .query("generations")
+            .withIndex("by_room_team_type", (q) =>
+              q.eq("roomId", room._id).eq("teamId", team._id).eq("type", "instrumental")
+            )
+            .first(),
+          ctx.db
+            .query("generations")
+            .withIndex("by_room_team_type", (q) =>
+              q.eq("roomId", room._id).eq("teamId", team._id).eq("type", "combined_mix")
+            )
+            .first(),
         ]);
 
         const recordingsByRole: Record<string, string | null> = {};
@@ -175,19 +189,32 @@ export const getRoom = query({
           if (url) recordingsByRole[r.role] = url;
         }
 
+        const instrumentalUrl = instrumentalGen?.fileUrl ?? null;
+
         const playersWithUrls = await Promise.all(
           players.map(async (p) => {
             let url = p.recordingUrl ?? recordingsByRole[p.role] ?? null;
             if (!url && p.recordingStorageId) {
               url = await ctx.storage.getUrl(p.recordingStorageId as any);
             }
+            if (!url && (p.role === "beat" || p.role === "melody") && instrumentalUrl) {
+              url = instrumentalUrl;
+            }
             return { ...p, recordingUrl: url };
           })
         );
-        const trackUrls = (["beat", "melody", "vocals"] as const).map(
-          (role) => recordingsByRole[role] ?? playersWithUrls.find((p) => p.role === role)?.recordingUrl ?? null
-        );
-        return { ...team, players: playersWithUrls, trackUrls };
+
+        const vocalsUrl = recordingsByRole["vocals"] ?? playersWithUrls.find((p) => p.role === "vocals")?.recordingUrl ?? null;
+        const rawBeat = recordingsByRole["beat"] ?? playersWithUrls.find((p) => p.role === "beat")?.recordingUrl ?? null;
+        const rawMelody = recordingsByRole["melody"] ?? playersWithUrls.find((p) => p.role === "melody")?.recordingUrl ?? null;
+        const trackUrls: (string | null)[] = [
+          instrumentalUrl ?? rawBeat,
+          instrumentalUrl ? null : rawMelody,
+          vocalsUrl,
+        ];
+        const hasInstrumental = !!instrumentalUrl;
+        const combinedMixUrl = combinedMixGen?.fileUrl ?? null;
+        return { ...team, players: playersWithUrls, trackUrls, hasInstrumental, combinedMixUrl };
       })
     );
 
@@ -476,7 +503,7 @@ export const updateGeneratedAudio = internalMutation({
     teamId: v.id("teams"),
     playerId: v.id("players"),
     fileUrl: v.string(),
-    role: v.union(v.literal("beat"), v.literal("melody")),
+    role: v.union(v.literal("beat"), v.literal("melody"), v.literal("vocals")),
     prompt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -513,6 +540,25 @@ export const updateGeneratedInstrumental = internalMutation({
     prompt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const existingGen = await ctx.db
+      .query("generations")
+      .withIndex("by_room_team_type", (q) =>
+        q.eq("roomId", args.roomId).eq("teamId", args.teamId).eq("type", "instrumental")
+      )
+      .first();
+    if (existingGen) {
+      await ctx.db.patch(existingGen._id, { fileUrl: args.fileUrl, prompt: args.prompt });
+    } else {
+      await ctx.db.insert("generations", {
+        roomId: args.roomId,
+        teamId: args.teamId,
+        type: "instrumental",
+        fileUrl: args.fileUrl,
+        prompt: args.prompt,
+        createdAt: Date.now(),
+      });
+    }
+
     const players = await ctx.db
       .query("players")
       .withIndex("by_team", (q) => q.eq("teamId", args.teamId))
@@ -548,6 +594,50 @@ export const updateGeneratedInstrumental = internalMutation({
           });
         }
       }
+    }
+
+    const vocalsRecording = await ctx.db
+      .query("recordings")
+      .withIndex("by_room_team_role", (q) =>
+        q.eq("roomId", args.roomId).eq("teamId", args.teamId).eq("role", "vocals")
+      )
+      .first();
+
+    if (vocalsRecording?.fileUrl) {
+      await workflow.start(ctx, internal.workflows.combinedMixWorkflow, {
+        roomId: args.roomId,
+        teamId: args.teamId,
+        instrumentalUrl: args.fileUrl,
+        vocalsUrl: vocalsRecording.fileUrl,
+      });
+    }
+  },
+});
+
+export const updateCombinedMix = internalMutation({
+  args: {
+    roomId: v.id("rooms"),
+    teamId: v.id("teams"),
+    fileUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("generations")
+      .withIndex("by_room_team_type", (q) =>
+        q.eq("roomId", args.roomId).eq("teamId", args.teamId).eq("type", "combined_mix")
+      )
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { fileUrl: args.fileUrl });
+    } else {
+      await ctx.db.insert("generations", {
+        roomId: args.roomId,
+        teamId: args.teamId,
+        type: "combined_mix",
+        fileUrl: args.fileUrl,
+        createdAt: Date.now(),
+      });
     }
   },
 });

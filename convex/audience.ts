@@ -134,7 +134,7 @@ async function getRoomWithTeams(ctx: any, roomId: Id<"rooms">) {
 
   const teamsWithPlayers = await Promise.all(
     teams.map(async (team: any) => {
-      const [players, recordings] = await Promise.all([
+      const [players, recordings, instrumentalGen] = await Promise.all([
         ctx.db.query("players").withIndex("by_team", (q: any) => q.eq("teamId", team._id)).collect(),
         ctx.db
           .query("recordings")
@@ -142,6 +142,12 @@ async function getRoomWithTeams(ctx: any, roomId: Id<"rooms">) {
             q.eq("roomId", roomId).eq("teamId", team._id)
           )
           .collect(),
+        ctx.db
+          .query("generations")
+          .withIndex("by_room_team_type", (q: any) =>
+            q.eq("roomId", roomId).eq("teamId", team._id).eq("type", "instrumental")
+          )
+          .first(),
       ]);
 
       const recordingsByRole: Record<string, string | null> = {};
@@ -153,6 +159,8 @@ async function getRoomWithTeams(ctx: any, roomId: Id<"rooms">) {
         if (url) recordingsByRole[r.role] = url;
       }
 
+      const instrumentalUrl = instrumentalGen?.fileUrl ?? null;
+
       const playersWithUrls = await Promise.all(
         players.map(async (p: any) => {
           let url = p.recordingUrl ?? recordingsByRole[p.role] ?? null;
@@ -162,11 +170,16 @@ async function getRoomWithTeams(ctx: any, roomId: Id<"rooms">) {
           return { ...p, recordingUrl: url };
         }),
       );
-      const trackUrls = (["beat", "melody", "vocals"] as const).map(
-        (role) =>
-          recordingsByRole[role] ?? playersWithUrls.find((p: any) => p.role === role)?.recordingUrl ?? null
-      );
-      return { ...team, players: playersWithUrls, trackUrls };
+      const vocalsUrl = recordingsByRole["vocals"] ?? playersWithUrls.find((p: any) => p.role === "vocals")?.recordingUrl ?? null;
+      const rawBeat = recordingsByRole["beat"] ?? playersWithUrls.find((p: any) => p.role === "beat")?.recordingUrl ?? null;
+      const rawMelody = recordingsByRole["melody"] ?? playersWithUrls.find((p: any) => p.role === "melody")?.recordingUrl ?? null;
+      const trackUrls: (string | null)[] = [
+        instrumentalUrl ?? rawBeat,
+        instrumentalUrl ? null : rawMelody,
+        vocalsUrl,
+      ];
+      const hasInstrumental = !!instrumentalUrl;
+      return { ...team, players: playersWithUrls, trackUrls, hasInstrumental };
     }),
   );
 

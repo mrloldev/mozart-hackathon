@@ -2,7 +2,7 @@
 
 import { Microphone, Stop } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ROLE_CHALLENGE } from "@/constants/game";
+import { ROLE_CHALLENGE, MAX_RECORDING_TIME } from "@/constants/game";
 import type { Role } from "@/types/game";
 
 interface Player {
@@ -30,8 +30,6 @@ export default function RecordingControls({
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const MAX_RECORDING_TIME = 15;
 
   const stopRecording = useCallback(async () => {
     if (timerRef.current) {
@@ -89,9 +87,9 @@ export default function RecordingControls({
       setRecordingTime(0);
       timerRef.current = setInterval(() => {
         setRecordingTime((prev) => {
-          if (prev >= 14) {
+          if (prev >= MAX_RECORDING_TIME - 1) {
             stopRecording();
-            return 15;
+            return MAX_RECORDING_TIME;
           }
           return prev + 1;
         });
@@ -101,7 +99,7 @@ export default function RecordingControls({
     }
   };
 
-  const maxRecordingTime = 15;
+  const maxRecordingTime = MAX_RECORDING_TIME;
   const timeLeft = maxRecordingTime - recordingTime;
   const circumference = 2 * Math.PI * 30;
 

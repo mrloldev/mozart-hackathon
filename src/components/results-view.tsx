@@ -22,6 +22,8 @@ interface Team {
   name: string;
   players: TeamPlayer[];
   trackUrls?: (string | null)[];
+  hasInstrumental?: boolean;
+  combinedMixUrl?: string | null;
 }
 
 interface RoomSong {
@@ -146,18 +148,26 @@ export default function ResultsView({
       const key = `combined-${team._id}`;
       if (playingKey === key) { stopAll(); return; }
       stopAll();
-      const urls = getUrlsForTeam(team);
-      if (!urls.some((u) => u != null && u.length > 0)) return;
       setPlayingKey(key);
       try {
-        const blob = await mixTrackUrls(urls);
-        if (!blob.size) throw new Error("Empty mix");
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onended = () => { URL.revokeObjectURL(url); stopAll(); };
-        await audio.play();
-        startProgressTracking(audio);
+        if (team.combinedMixUrl) {
+          const audio = new Audio(team.combinedMixUrl);
+          audioRef.current = audio;
+          audio.onended = stopAll;
+          await audio.play();
+          startProgressTracking(audio);
+        } else {
+          const urls = getUrlsForTeam(team);
+          if (!urls.some((u) => u != null && u.length > 0)) { stopAll(); return; }
+          const blob = await mixTrackUrls(urls);
+          if (!blob.size) throw new Error("Empty mix");
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          audioRef.current = audio;
+          audio.onended = () => { URL.revokeObjectURL(url); stopAll(); };
+          await audio.play();
+          startProgressTracking(audio);
+        }
       } catch (err) {
         console.error("[ResultsView] Combined mix failed:", err);
         stopAll();
@@ -263,6 +273,7 @@ export default function ResultsView({
             const isCombinedPlaying = playingKey === combinedKey;
             const urlsForTeam = team.trackUrls ?? getTrackUrls(team.players);
             const hasTrack = urlsForTeam.some((u) => u != null && u.length > 0);
+            const canShowCombinedMix = !!team.combinedMixUrl || (team.hasInstrumental === true && hasTrack);
 
             return (
               <motion.div
@@ -311,14 +322,16 @@ export default function ResultsView({
 
                   {hasTrack && (
                     <>
-                      <MiniPlayer
-                        label="Combined Mix"
-                        color={colors.bgColor}
-                        isPlaying={isCombinedPlaying}
-                        progress={isCombinedPlaying ? progress : 0}
-                        duration={isCombinedPlaying ? duration : 0}
-                        onToggle={() => handlePlayCombined(team)}
-                      />
+                      {canShowCombinedMix && (
+                        <MiniPlayer
+                          label="Combined Mix"
+                          color={colors.bgColor}
+                          isPlaying={isCombinedPlaying}
+                          progress={isCombinedPlaying ? progress : 0}
+                          duration={isCombinedPlaying ? duration : 0}
+                          onToggle={() => handlePlayCombined(team)}
+                        />
+                      )}
                       <div className="mt-3 space-y-2 rounded-lg border border-white/6 bg-black/20 p-3">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
                           Track record

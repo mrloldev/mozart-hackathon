@@ -7,9 +7,35 @@
  * the source audio. We get this from UploadThing after storing files:
  * uploadToUploadThing() returns the ufsUrl — pass that as uploadUrl to Suno.
  */
+import { spawn } from "child_process";
 import { UTApi } from "uploadthing/server";
+import ffmpegPath from "ffmpeg-static";
 
 const SUNO_BASE = "https://api.kie.ai/api/v1";
+const MAX_OUTPUT_SEC = 30;
+
+async function trimAudioToSeconds(buf: Buffer, maxSec: number): Promise<Buffer> {
+  const ffmpeg = ffmpegPath;
+  if (!ffmpeg || typeof ffmpeg !== "string") return buf;
+
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    const proc = spawn(ffmpeg, ["-i", "pipe:0", "-t", String(maxSec), "-acodec", "copy", "-f", "mp3", "pipe:1"], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    proc.stdin?.write(buf, (err) => {
+      if (err) reject(err);
+      else proc.stdin?.end();
+    });
+    proc.stdout?.on("data", (chunk: Buffer) => chunks.push(chunk));
+    proc.stderr?.on("data", () => {});
+    proc.on("close", (code) => {
+      if (code === 0 && chunks.length > 0) resolve(Buffer.concat(chunks));
+      else resolve(buf);
+    });
+    proc.on("error", () => resolve(buf));
+  });
+}
 const BEAT_STYLE = "Drums, punchy kick drum, snappy snare, driving rhythm, energetic battle beat";
 const CALLBACK_URL = "https://example.com/callback";
 
@@ -42,23 +68,33 @@ const MELODY_PROMPT = "Single instrument melody. Use only guitar or piano. No ot
 const INSTRUMENTAL_STYLE =
   "Production instrumental. Frame-accurate to source. Punchy kick, snappy snare, guitar or piano melody. Temporal fidelity.";
 
-const INSTRUMENTAL_PROMPT = `The source is a combined beat (drums) + rhythm/melody mix. Track it second by second. Output must match the reference temporally for production-quality result.
+const INSTRUMENTAL_PROMPT = `The source is a combined beat (drums) + rhythm/melody mix, at most 30 seconds long. Track it second by second. Output must match the reference temporally.
 
-Critical: Match the source timeline exactly. Every second of your output must correspond to the same moment in the source. No stretching, compressing, or reordering.
+Critical: Your output must be EXACTLY the same length as the source. Do not extend beyond the source. Maximum 30 seconds. Match every second of your output to the same moment in the source. No stretching, compressing, reordering, or adding bars.
 
 - Beat/rhythm: Align every kick, snare, hi-hat with source timing. Preserve groove and swing.
 - Melody: Mirror note placement, phrasing, dynamics second by second.
 - Structure: Same sections, transitions, build-ups as source. No added or removed bars.
 - Production: Crisp drums (punchy kick, snappy snare), clear melodic instrument (guitar or piano). Instrumental only, no vocals.
-- Goal: Professional studio version of this exact reference—temporal clone, not reinterpretation.`;
+- Goal: Professional studio version of this exact reference—temporal clone, first 30 seconds only.`;
 
-type CoverRole = "beat" | "melody" | "instrumental";
+const VOCALS_STYLE = "Clear lead vocals, professional production, polished vocal tone";
+const VOCALS_PROMPT =
+  "Transform the vocal recording into production-quality lead vocals. Preserve the melody, phrasing, and timing second by second. Polished voice, clear enunciation, professional mix. Keep the same structure and emotional delivery.";
 
-function getCoverParams(role: CoverRole): { prompt: string; style: string; title: string } {
-  if (role === "beat") return { prompt: BEAT_STYLE, style: BEAT_STYLE, title: "Beat" };
+type CoverRole = "beat" | "melody" | "instrumental" | "vocals";
+
+function getCoverParams(role: CoverRole): {
+  prompt: string;
+  style: string;
+  title: string;
+  instrumental: boolean;
+} {
+  if (role === "beat") return { prompt: BEAT_STYLE, style: BEAT_STYLE, title: "Beat", instrumental: true };
   if (role === "instrumental")
-    return { prompt: INSTRUMENTAL_PROMPT, style: INSTRUMENTAL_STYLE, title: "Instrumental" };
-  return { prompt: MELODY_PROMPT, style: MELODY_STYLE, title: "Melody" };
+    return { prompt: INSTRUMENTAL_PROMPT, style: INSTRUMENTAL_STYLE, title: "Instrumental", instrumental: true };
+  if (role === "vocals") return { prompt: VOCALS_PROMPT, style: VOCALS_STYLE, title: "Vocals", instrumental: false };
+  return { prompt: MELODY_PROMPT, style: MELODY_STYLE, title: "Melody", instrumental: true };
 }
 
 /**
@@ -70,7 +106,7 @@ export async function sunoUploadAndCover(
   uploadUrl: string,
   role: CoverRole = "melody"
 ): Promise<string> {
-  const { prompt, style, title } = getCoverParams(role);
+  const { prompt, style, title, instrumental } = getCoverParams(role);
   const res = await fetch(`${SUNO_BASE}/generate/upload-cover`, {
     method: "POST",
     headers: {
@@ -83,7 +119,7 @@ export async function sunoUploadAndCover(
       style,
       title,
       customMode: true,
-      instrumental: true,
+      instrumental,
       model: "V5",
       audioWeight: 1,
       callBackUrl: CALLBACK_URL,
@@ -101,7 +137,7 @@ export async function sunoUploadAndCover(
 export async function sunoPollAndUpload(
   apiKey: string,
   taskId: string,
-  role: "beat" | "melody" | "instrumental" = "melody"
+  role: "beat" | "melody" | "instrumental" | "vocals" = "melody"
 ): Promise<string> {
   for (let i = 0; i < 120; i++) {
     await new Promise((r) => setTimeout(r, 5000));
@@ -124,7 +160,10 @@ export async function sunoPollAndUpload(
       if (!audioUrl) throw new Error("No audio URL in Suno response");
       const audioRes = await fetch(audioUrl);
       if (!audioRes.ok) throw new Error("Failed to download Suno audio");
-      const buf = Buffer.from(await audioRes.arrayBuffer());
+      let buf = Buffer.from(await audioRes.arrayBuffer());
+      if (role === "instrumental") {
+        buf = await trimAudioToSeconds(buf, MAX_OUTPUT_SEC);
+      }
       return await uploadToUploadThing(buf, `${role}-${Date.now()}.mp3`);
     }
     if (

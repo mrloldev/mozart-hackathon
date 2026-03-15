@@ -54,7 +54,7 @@ function audioBufferToWav(buffer: AudioBuffer): Blob {
 }
 
 const TRACK_WEIGHTS = [0.7, 0.7, 1.2] as const;
-const MIX_MAX_DURATION_SEC = 15;
+const MIX_MAX_DURATION_SEC = 30;
 
 export async function mixBeatAndMelodyBlob(beatUrl: string, melodyBlob: Blob): Promise<Blob> {
   const ctx = new AudioContext();

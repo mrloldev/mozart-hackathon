@@ -60,6 +60,17 @@ export default defineSchema({
     .index("by_player", ["playerId"])
     .index("by_room_team_role", ["roomId", "teamId", "role"]),
 
+  generations: defineTable({
+    roomId: v.id("rooms"),
+    teamId: v.id("teams"),
+    type: v.union(v.literal("instrumental"), v.literal("vocals"), v.literal("combined_mix")),
+    fileUrl: v.string(),
+    prompt: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_room_team", ["roomId", "teamId"])
+    .index("by_room_team_type", ["roomId", "teamId", "type"]),
+
   audience: defineTable({
     roomId: v.id("rooms"),
     sessionId: v.string(),
