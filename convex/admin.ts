@@ -42,6 +42,28 @@ export const listSongs = query({
   },
 });
 
+export const updateSong = mutation({
+  args: {
+    password: v.string(),
+    songId: v.id("songs"),
+    title: v.optional(v.string()),
+    lyrics: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    if (!verifyPassword(args.password)) {
+      throw new Error("Invalid password");
+    }
+    const song = await ctx.db.get(args.songId);
+    if (!song) throw new Error("Song not found");
+    const updates: { title?: string; lyrics?: string } = {};
+    if (args.title !== undefined) updates.title = args.title;
+    if (args.lyrics !== undefined) updates.lyrics = args.lyrics;
+    if (Object.keys(updates).length > 0) {
+      await ctx.db.patch(args.songId, updates);
+    }
+  },
+});
+
 export const deleteSong = mutation({
   args: {
     password: v.string(),
