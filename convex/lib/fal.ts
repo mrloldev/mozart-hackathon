@@ -1,58 +1,63 @@
 "use node";
 
+import { spawn } from "child_process";
+import ffmpegPath from "ffmpeg-static";
 import { uploadToUploadThing } from "./suno";
 
-const FAL_COMPOSE_URL = "https://fal.run/fal-ai/ffmpeg-api/compose";
+function mixAudioWithFFmpeg(
+  instrumentalUrl: string,
+  vocalsUrl: string
+): Promise<Buffer> {
+  const ffmpeg = ffmpegPath;
+  if (!ffmpeg || typeof ffmpeg !== "string")
+    throw new Error("ffmpeg-static not available");
 
-function getFalKey(): string {
-  const key = process.env.FAL_KEY;
-  if (!key) throw new Error("FAL_KEY not set");
-  return key;
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    const proc = spawn(
+      ffmpeg,
+      [
+        "-i", instrumentalUrl,
+        "-i", vocalsUrl,
+        "-filter_complex",
+        "[0:a]volume=0.85[inst];[1:a]volume=0.65[voc];[inst][voc]amix=inputs=2:duration=longest:dropout_transition=0:normalize=0[out]",
+        "-map", "[out]",
+        "-ac", "2",
+        "-f", "mp3",
+        "pipe:1",
+      ],
+      { stdio: ["pipe", "pipe", "pipe"] }
+    );
+
+    proc.stdout?.on("data", (chunk: Buffer) => chunks.push(chunk));
+    proc.stderr?.on("data", () => {});
+    proc.on("close", (code) => {
+      if (code === 0 && chunks.length > 0) resolve(Buffer.concat(chunks));
+      else reject(new Error(`FFmpeg mix exited with code ${code}`));
+    });
+    proc.on("error", (err) => reject(err));
+    proc.stdin?.end();
+  });
 }
 
 export async function falComposeAndUpload(
   instrumentalUrl: string,
   vocalsUrl: string
 ): Promise<string> {
-  console.log("[fal] Composing instrumental + vocals", { instrumentalUrl, vocalsUrl });
-
-  const res = await fetch(FAL_COMPOSE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Key ${getFalKey()}`,
-    },
-    body: JSON.stringify({
-      tracks: [
-        {
-          id: "instrumental",
-          type: "audio",
-          keyframes: [{ url: instrumentalUrl, timestamp: 0, duration: 30000 }],
-        },
-        {
-          id: "vocals",
-          type: "audio",
-          keyframes: [{ url: vocalsUrl, timestamp: 0, duration: 30000 }],
-        },
-      ],
-    }),
+  console.log("[mix] Composing instrumental + vocals with FFmpeg", {
+    instrumentalUrl,
+    vocalsUrl,
   });
 
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(`fal.ai compose error (${res.status}): ${errText}`);
-  }
+  const buf = await mixAudioWithFFmpeg(instrumentalUrl, vocalsUrl);
+  console.log("[mix] FFmpeg compose done, uploading", {
+    bytes: buf.length,
+  });
 
-  const json = (await res.json()) as { video_url?: string };
-  const composedUrl = json.video_url;
-  if (!composedUrl) throw new Error("No video_url in fal.ai compose response");
-
-  console.log("[fal] Compose done, downloading result");
-  const audioRes = await fetch(composedUrl);
-  if (!audioRes.ok) throw new Error("Failed to download composed audio from fal.ai");
-  const buf = Buffer.from(await audioRes.arrayBuffer());
-
-  const uploadedUrl = await uploadToUploadThing(buf, `combined-mix-${Date.now()}.mp4`);
-  console.log("[fal] Uploaded combined mix", { uploadedUrl });
+  const uploadedUrl = await uploadToUploadThing(
+    buf,
+    `combined-mix-${Date.now()}.mp3`
+  );
+  console.log("[mix] Uploaded combined mix", { uploadedUrl });
   return uploadedUrl;
 }

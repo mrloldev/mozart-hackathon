@@ -99,6 +99,26 @@ export default function RecordingControls({
     }
   };
 
+  const [fileUrl, setFileUrl] = useState("");
+  const [isSubmittingUrl, setIsSubmittingUrl] = useState(false);
+  const showUrlInput = process.env.NEXT_PUBLIC_VERCEL_ENV !== "production";
+
+  const handleUrlSubmit = async () => {
+    const trimmed = fileUrl.trim();
+    if (!trimmed) return;
+    setIsSubmittingUrl(true);
+    try {
+      const res = await fetch(trimmed);
+      const blob = await res.blob();
+      await onRecordingComplete(blob);
+      setFileUrl("");
+    } catch (err) {
+      console.error("Failed to fetch audio URL:", err);
+    } finally {
+      setIsSubmittingUrl(false);
+    }
+  };
+
   const maxRecordingTime = MAX_RECORDING_TIME;
   const timeLeft = maxRecordingTime - recordingTime;
   const circumference = 2 * Math.PI * 30;
@@ -109,14 +129,15 @@ export default function RecordingControls({
         {ROLE_CHALLENGE[currentRole.id as Role]}
       </p>
 
-      {isUploading ? (
+      {isUploading || isSubmittingUrl ? (
         <div className="flex flex-col items-center gap-2 py-4">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--accent-primary)] border-t-transparent" />
-          <p className="text-xs font-semibold text-white/40">Uploading...</p>
+          <p className="text-xs font-semibold text-white/40">
+            {isSubmittingUrl ? "Fetching URL..." : "Uploading..."}
+          </p>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-3">
-          {/* Single button — toggles between REC and STOP */}
           <div className="relative flex h-[72px] w-[72px] items-center justify-center">
             {isRecording && (
               <svg className="absolute inset-0 -rotate-90" viewBox="0 0 72 72">
@@ -153,6 +174,26 @@ export default function RecordingControls({
             </button>
           </div>
 
+          {showUrlInput && (
+            <div className="flex w-full items-center gap-1.5">
+              <input
+                type="text"
+                value={fileUrl}
+                onChange={(e) => setFileUrl(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleUrlSubmit()}
+                placeholder="Paste audio URL…"
+                className="min-w-0 flex-1 rounded border border-white/15 bg-white/5 px-2 py-1 text-xs text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleUrlSubmit}
+                disabled={!fileUrl.trim()}
+                className="shrink-0 rounded bg-white/10 px-2 py-1 text-xs font-medium text-white/70 hover:bg-white/20 disabled:opacity-30"
+              >
+                Go
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
