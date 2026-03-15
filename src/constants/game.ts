@@ -1,6 +1,6 @@
-import { MusicNotes, PianoKeys, Microphone } from "@phosphor-icons/react";
+import { Music, Music2, Mic } from "lucide-react";
 import { randomAvatar } from "@/lib/avataaars";
-import { randomTeamName, randomPlayerName, randomUniquePlayerNames, randomUniqueTeamNames } from "@/lib/names";
+import { randomTeamName, randomPlayerName } from "@/lib/names";
 import type { Role } from "@/types/game";
 import type { LocalTeam } from "@/types/game";
 
@@ -9,19 +9,47 @@ export const ROLES: {
   label: string;
   Icon: React.ComponentType<{
     size?: number;
-    weight?: "thin" | "light" | "regular" | "bold" | "fill" | "duotone";
+    strokeWidth?: number;
     className?: string;
   }>;
   description: string;
 }[] = [
-  { id: "beat", label: "Beat Maker", Icon: MusicNotes, description: "Create the rhythm" },
-  { id: "melody", label: "Melody", Icon: PianoKeys, description: "Add the melody" },
-  { id: "vocals", label: "Singer", Icon: Microphone, description: "Record vocals" },
+  { id: "beat", label: "Beat Maker", Icon: Music, description: "Create the rhythm" },
+  { id: "melody", label: "Melody", Icon: Music2, description: "Add the melody" },
+  { id: "vocals", label: "Singer", Icon: Mic, description: "Record vocals" },
 ];
 
 export const TEAM_COLORS = [
-  { color: "text-cyan-400", bgColor: "bg-cyan-600", ring: "ring-cyan-500/60", border: "border-cyan-500/40" },
-  { color: "text-orange-400", bgColor: "bg-orange-600", ring: "ring-orange-500/60", border: "border-orange-500/40" },
+  {
+    color: "text-cyan-300",
+    bgColor: "bg-cyan-600",
+    bgGradient: "bg-gradient-to-br from-cyan-500 to-cyan-700",
+    ring: "ring-cyan-400/60",
+    border: "border-cyan-400/30",
+    glow: "shadow-[0_0_24px_rgba(34,211,238,0.25)]",
+    glowStrong: "shadow-[0_0_50px_rgba(34,211,238,0.35)]",
+    pulseClass: "animate-game-pulse",
+    textGlow: "text-glow-cyan",
+    bgTint: "bg-cyan-500/[0.06]",
+    bgTintStrong: "bg-cyan-500/[0.12]",
+    barColor: "bg-cyan-400",
+    playedColor: "rgba(34,211,238,0.85)",
+  },
+  {
+    color: "text-orange-300",
+    bgColor: "bg-orange-600",
+    bgGradient: "bg-gradient-to-br from-orange-500 to-orange-700",
+    ring: "ring-orange-400/60",
+    border: "border-orange-400/30",
+    glow: "shadow-[0_0_24px_rgba(251,146,60,0.25)]",
+    glowStrong: "shadow-[0_0_50px_rgba(251,146,60,0.35)]",
+    pulseClass: "animate-game-pulse-orange",
+    textGlow: "text-glow-orange",
+    bgTint: "bg-orange-500/[0.06]",
+    bgTintStrong: "bg-orange-500/[0.12]",
+    barColor: "bg-orange-400",
+    playedColor: "rgba(251,146,60,0.85)",
+  },
 ];
 
 export const MAX_RECORDING_TIME = 30;

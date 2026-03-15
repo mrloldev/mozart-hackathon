@@ -100,7 +100,7 @@ function HostSpectatorView({ room, code }: { room: any; code: string }) {
 
   return (
     <motion.div
-      className="mx-auto flex max-w-5xl flex-col gap-5"
+      className="mx-auto flex max-w-7xl flex-col gap-5"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
@@ -135,10 +135,10 @@ function HostSpectatorView({ room, code }: { room: any; code: string }) {
       )}
 
       {(lyrics || audioUrl) && (
-        <div className="rounded-lg border border-white/8 bg-white/5 p-4">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
           {audioUrl && <SongPlayer src={audioUrl} />}
           {lyrics && (
-            <p className={`whitespace-pre-wrap text-sm leading-relaxed text-white/60 md:text-base ${audioUrl ? "mt-4" : ""}`}>
+            <p className={`whitespace-pre-wrap text-sm leading-relaxed text-white/40 md:text-base ${audioUrl ? "mt-4" : ""}`}>
               {lyrics}
             </p>
           )}
@@ -257,15 +257,18 @@ export default function RoomPage() {
   if (!code || room === null) return null;
   if (room === undefined || !session) {
     return (
-      <AppShell showFooter>
-        <main className="mx-auto max-w-lg px-4 py-16 text-center">
-          <p className="text-[var(--muted-foreground)]">Loading room...</p>
-          <button
-            onClick={() => router.push("/")}
-            className="mt-4 text-sm font-semibold text-[var(--accent-primary)]"
-          >
-            Back to home
-          </button>
+      <AppShell minimal>
+        <main className="flex flex-1 items-center justify-center px-4">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+            <p className="text-sm text-white/30">Loading room...</p>
+            <button
+              onClick={() => router.push("/")}
+              className="mt-4 text-sm font-bold text-cyan-400/60 transition-colors hover:text-cyan-400"
+            >
+              Back to home
+            </button>
+          </div>
         </main>
       </AppShell>
     );
@@ -274,10 +277,17 @@ export default function RoomPage() {
   const isHostOnly = session.isHost && session.teamId === null;
 
   if (room.phase === "results" || room.phase === "playing") {
+    const gameHeaderRight = room.phase === "playing" ? (
+      <GameTopBar
+        currentRoleIndex={room.currentRoleIndex}
+        audienceCount={room.isPublic ? undefined : undefined}
+      />
+    ) : undefined;
+
     if (isHostOnly) {
       return (
-        <AppShell showFooter>
-          <main className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:px-6 sm:py-8">
+        <AppShell minimal headerRight={gameHeaderRight}>
+          <main className="mx-auto max-w-7xl px-4 py-4 pb-24 sm:px-6">
             <HostQROverlay code={code} bothTeams={room.teams.length >= 2} />
             <HostSpectatorView room={room} code={code} />
           </main>
@@ -293,8 +303,8 @@ export default function RoomPage() {
       );
     }
     return (
-      <AppShell showFooter={false}>
-        <main className="mx-auto flex h-[calc(100dvh-3.5rem)] max-w-6xl flex-col overflow-hidden px-4 py-3 sm:px-6 sm:py-4">
+      <AppShell minimal headerRight={gameHeaderRight}>
+        <main className="mx-auto flex min-w-0 flex-1 max-w-7xl flex-col overflow-hidden px-4 py-2 sm:px-6 sm:py-3">
           <GameView
             room={room as Parameters<typeof GameView>[0]["room"]}
             teamId={session.teamId!}
@@ -316,8 +326,8 @@ export default function RoomPage() {
         )}
 
         {toast && (
-          <div className="fixed bottom-20 left-4 right-4 z-50 animate-modal-enter sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
-            <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-modal)] px-4 py-3 text-sm font-medium text-[var(--foreground)] shadow-xl">
+          <div className="fixed bottom-6 left-4 right-4 z-50 animate-modal-enter sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
+            <div className="rounded-2xl border border-white/[0.08] bg-[#111114] px-4 py-3 text-sm font-bold text-white shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
               {toast}
             </div>
           </div>
@@ -327,8 +337,8 @@ export default function RoomPage() {
   }
 
   return (
-    <AppShell showFooter>
-      <main className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:px-6 sm:py-8">
+    <AppShell minimal>
+      <main className="flex flex-1 flex-col">
         <WaitingRoomView
           room={room}
           roomCode={code}
@@ -347,8 +357,8 @@ export default function RoomPage() {
       </main>
 
       {toast && (
-        <div className="fixed bottom-20 left-4 right-4 z-50 animate-modal-enter sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
-          <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-modal)] px-4 py-3 text-sm font-medium text-[var(--foreground)] shadow-xl">
+        <div className="fixed bottom-6 left-4 right-4 z-50 animate-modal-enter sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
+          <div className="rounded-2xl border border-white/[0.08] bg-[#111114] px-4 py-3 text-sm font-bold text-white shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
             {toast}
           </div>
         </div>

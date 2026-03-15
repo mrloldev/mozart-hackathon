@@ -28,7 +28,7 @@ export default function JoinRoomModal({
             onClick={onNext}
             disabled={code.length < 6}
           >
-            Continue
+            Join Battle
           </Button>
         </div>
       }
@@ -38,9 +38,10 @@ export default function JoinRoomModal({
           label="Room Code"
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onKeyDown={(e) => e.key === "Enter" && code.length >= 6 && onNext()}
           placeholder="ABC123"
           maxLength={6}
-          className="text-center text-2xl font-extrabold tracking-[0.25em] placeholder:text-[var(--muted-foreground)]"
+          className="!text-center !text-2xl !font-black !tracking-[0.25em] placeholder:!text-white/20"
         />
       </div>
     </Modal>

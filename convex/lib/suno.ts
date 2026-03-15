@@ -160,7 +160,7 @@ export async function sunoPollAndUpload(
       if (!audioUrl) throw new Error("No audio URL in Suno response");
       const audioRes = await fetch(audioUrl);
       if (!audioRes.ok) throw new Error("Failed to download Suno audio");
-      let buf = Buffer.from(await audioRes.arrayBuffer());
+      let buf: Buffer = Buffer.from(new Uint8Array(await audioRes.arrayBuffer()));
       if (role === "instrumental") {
         buf = await trimAudioToSeconds(buf, MAX_OUTPUT_SEC);
       }

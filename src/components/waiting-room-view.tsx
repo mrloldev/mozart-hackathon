@@ -1,15 +1,18 @@
 "use client";
 
-import { CaretRight, Copy, ShareNetwork } from "@phosphor-icons/react";
+import { Copy, Share2, Zap } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useQuery } from "convex/react";
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { Role } from "@/types/game";
-import TeamCard from "./team-card";
-import { Button, Badge, Card } from "@/components/ui";
+import { ROLES, TEAM_COLORS } from "@/constants/game";
+import { Button, Badge } from "@/components/ui";
+import EditableName from "@/components/editable-name";
+import { Pencil } from "lucide-react";
 
 type RoomTeam = {
   _id: Id<"teams">;
@@ -86,209 +89,271 @@ export default function WaitingRoomView({
   const canStart = room.teams.length === 2 && isHost && isOtherTeamConnected;
   const bothTeamsJoined = room.teams.length === 2;
 
-  const myTeamIndex = 0;
-  const otherTeamIndex = 1;
+  const leftTeam = isHostOnly ? team1 : myTeam;
+  const rightTeam = isHostOnly ? team2 : otherTeam;
 
   return (
-    <motion.div 
-      className="space-y-8"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="text-center">
-        <motion.h2 
-          className="font-display text-2xl font-black uppercase tracking-wider text-[var(--foreground)]"
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          {bothTeamsJoined ? "Ready to Play" : "Waiting for Opponent"}
-        </motion.h2>
-        <motion.p 
-          className="mt-1 text-[var(--muted-foreground)]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          {bothTeamsJoined
-            ? isHost
-              ? "Start the game when ready"
-              : "Waiting for host to start"
-            : "Share the code with the other team to join"}
-        </motion.p>
-      </div>
-
-      {(isHost || !bothTeamsJoined) && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="mx-auto max-w-md p-6">
-          <p className="mb-3 text-center text-sm font-semibold text-[var(--muted-foreground)]">
-            {isHost ? "SHARE – JOIN & WATCH" : "ROOM CODE"}
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-full min-w-0 text-center">
-              <p className="text-xs font-semibold text-[var(--muted-foreground)]">CODE</p>
-              <div className="mt-1 flex justify-center gap-0.5 overflow-hidden sm:gap-1">
-                {roomCode.split("").map((char, i) => (
-                  <span
-                    key={i}
-                    className="font-display inline-block min-w-[1ch] text-3xl font-black tracking-wider text-[var(--accent-primary)] sm:text-4xl md:text-5xl md:tracking-widest"
-                  >
-                    {char}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Button
-                variant="secondary"
-                size="md"
-                leftIcon={<Copy size={16} weight="bold" />}
-                onClick={copyCode}
-              >
-                {copiedCode ? "Copied!" : "Copy Code"}
-              </Button>
-              <Button
-                variant="secondary"
-                size="md"
-                leftIcon={<ShareNetwork size={16} weight="bold" />}
-                onClick={copyUrl}
-              >
-                {copiedUrl ? "Copied!" : "Copy Join URL"}
-              </Button>
-              {room.isPublic && (
-                <Button
-                  variant="secondary"
-                  size="md"
-                  leftIcon={<Copy size={16} weight="bold" />}
-                  onClick={copyAudienceUrl}
+    <div className="flex flex-1 flex-col">
+      {/* VS Split screen — the big moment */}
+      <div className="flex flex-1 flex-col items-center justify-center px-4 py-4">
+        <div className="w-full max-w-lg lg:max-w-3xl">
+          {/* Top: Room code */}
+          <motion.div
+            className="mb-6 text-center"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="flex items-center justify-center gap-2">
+              {roomCode.split("").map((char, i) => (
+                <motion.span
+                  key={i}
+                  className="font-display inline-flex h-10 w-8 items-center justify-center rounded-lg bg-white/6 text-lg font-black tracking-wider text-cyan-400"
+                  initial={{ opacity: 0, rotateX: -90 }}
+                  animate={{ opacity: 1, rotateX: 0 }}
+                  transition={{ delay: 0.1 + i * 0.05, type: "spring", stiffness: 300 }}
                 >
-                  {copiedAudienceUrl ? "Copied!" : "Copy Watch URL"}
-                </Button>
+                  {char}
+                </motion.span>
+              ))}
+              <button
+                onClick={copyCode}
+                className="ml-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white/6 text-white/30 transition-colors hover:bg-white/10 hover:text-white/60 active:scale-95"
+              >
+                <Copy size={14} strokeWidth={2.5} />
+              </button>
+            </div>
+            <div className="mt-2 flex justify-center gap-2">
+              <button onClick={copyUrl} className="text-[10px] font-bold text-white/20 underline decoration-white/10 hover:text-white/40">
+                {copiedUrl ? "Copied!" : "Copy join link"}
+              </button>
+              {room.isPublic && (
+                <button onClick={copyAudienceUrl} className="text-[10px] font-bold text-white/20 underline decoration-white/10 hover:text-white/40">
+                  {copiedAudienceUrl ? "Copied!" : "Copy watch link"}
+                </button>
               )}
             </div>
-            <div className="grid w-full grid-cols-2 gap-4">
-              <div className="flex flex-col items-center gap-2">
-                <p className="text-xs font-semibold text-[var(--muted-foreground)]">JOIN</p>
-                <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-white p-3">
-                  <QRCodeSVG value={shareUrl} size={120} fgColor="#070708" bgColor="#ffffff" level="M" />
+          </motion.div>
+
+          {/* VS Battle card */}
+          <div className="relative">
+            {/* Team 1 (left/top) */}
+            <motion.div
+              className="overflow-hidden rounded-t-3xl"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
+            >
+              {leftTeam ? (
+                <TeamPanel
+                  team={leftTeam}
+                  teamIndex={0}
+                  isEditable={!isHostOnly && leftTeam._id === teamId}
+                  onTeamNameChange={!isHostOnly ? (name: string) => onUpdateTeamName(leftTeam._id, name) : undefined}
+                  onPlayerNameChange={!isHostOnly ? (id: Id<"players">, name: string) => onUpdatePlayerName(id, name) : undefined}
+                />
+              ) : (
+                <EmptyTeamPanel label="Waiting for team..." color="cyan" />
+              )}
+            </motion.div>
+
+            {/* VS badge — overlapping both panels */}
+            <div className="relative z-10 -my-5 flex justify-center">
+              <motion.div
+                className="flex h-10 w-16 items-center justify-center rounded-full border-2 border-white/15 bg-[#0a0a0e] shadow-[0_0_30px_rgba(0,0,0,0.8)]"
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ delay: 0.4, type: "spring", stiffness: 300, damping: 15 }}
+              >
+                <span className="font-display text-sm font-black tracking-widest text-white/60">VS</span>
+              </motion.div>
+            </div>
+
+            {/* Team 2 (right/bottom) */}
+            <motion.div
+              className="relative overflow-hidden rounded-b-3xl"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 20 }}
+            >
+              {rightTeam ? (
+                <>
+                  {rightTeam.isConnected === false && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                      <div className="text-center">
+                        <p className="text-sm font-black text-red-400">Disconnected</p>
+                        <p className="text-[10px] text-white/25">Reconnecting...</p>
+                      </div>
+                    </div>
+                  )}
+                  <TeamPanel team={rightTeam} teamIndex={1} />
+                </>
+              ) : (
+                <EmptyTeamPanel label="Waiting for opponent..." color="orange" />
+              )}
+            </motion.div>
+          </div>
+
+          {/* QR codes */}
+          {isHost && (
+            <motion.div
+              className="mt-5 flex justify-center gap-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="rounded-xl bg-white p-2">
+                  <QRCodeSVG value={shareUrl} size={72} fgColor="#050507" bgColor="#ffffff" level="M" />
                 </div>
+                <span className="text-[8px] font-bold uppercase tracking-widest text-white/20">Join</span>
               </div>
               {room.isPublic && (
-                <div className="flex flex-col items-center gap-2">
-                  <p className="text-xs font-semibold text-[var(--muted-foreground)]">WATCH</p>
-                  <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-white p-3">
-                    <QRCodeSVG value={audienceUrl} size={120} fgColor="#070708" bgColor="#ffffff" level="M" />
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="rounded-xl bg-white p-2">
+                    <QRCodeSVG value={audienceUrl} size={72} fgColor="#050507" bgColor="#ffffff" level="M" />
                   </div>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/20">Watch</span>
                   {audienceCount !== undefined && (
-                    <Badge variant="primary">{audienceCount} watching</Badge>
+                    <span className="text-[9px] font-bold text-cyan-400/50">{audienceCount} watching</span>
                   )}
                 </div>
               )}
-            </div>
-            </div>
-          </Card>
-        </motion.div>
-      )}
+            </motion.div>
+          )}
+        </div>
+      </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {isHostOnly ? (
-          <>
-            {team1 ? (
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-                <TeamCard team={team1} teamIndex={0} />
-              </motion.div>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex min-h-[200px] items-center justify-center rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--border)]">
-                <p className="text-[var(--muted-foreground)]">Waiting for first team...</p>
-              </motion.div>
-            )}
-            {team2 ? (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="relative">
-                {team2.isConnected === false && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/70">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-[var(--error)]">Opponent Disconnected</p>
-                      <p className="text-sm text-[var(--muted-foreground)]">Waiting for them to reconnect...</p>
-                    </div>
-                  </div>
-                )}
-                <TeamCard team={team2} teamIndex={1} />
-              </motion.div>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex min-h-[200px] items-center justify-center rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--border)]">
-                <p className="text-[var(--muted-foreground)]">Waiting for second team...</p>
-              </motion.div>
-            )}
-          </>
-        ) : (
-          <>
-            {myTeam && (
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-                <TeamCard
-                  team={myTeam}
-                  teamIndex={myTeamIndex}
-                  isEditable
-                  onTeamNameChange={(name) => onUpdateTeamName(myTeam._id, name)}
-                  onPlayerNameChange={(playerId, name) =>
-                    onUpdatePlayerName(playerId, name)
-                  }
+      {/* Bottom: Start button or waiting indicator */}
+      <div className="shrink-0 px-4 pb-6">
+        <AnimatePresence>
+          {canStart && (
+            <motion.div
+              className="mx-auto max-w-sm"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <button
+                onClick={onStartGame}
+                className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[1px] active:scale-[0.97]"
+              >
+                <div className="flex items-center justify-center gap-3 rounded-[15px] bg-gradient-to-br from-cyan-500/20 to-blue-600/10 py-5">
+                  <Zap size={28} fill="currentColor" className="text-white" />
+                  <span className="font-display text-xl font-black uppercase tracking-wider text-white">
+                    Start Battle
+                  </span>
+                </div>
+                <div className="absolute inset-0 animate-game-pulse rounded-2xl" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {!canStart && (
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            {!isHost && bothTeamsJoined ? (
+              <p className="text-sm font-bold text-white/25">Waiting for host to start...</p>
+            ) : !bothTeamsJoined ? (
+              <div className="flex items-center justify-center gap-2">
+                <motion.div
+                  className="h-1.5 w-1.5 rounded-full bg-white/30"
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
                 />
-              </motion.div>
-            )}
-            {otherTeam ? (
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }} className="relative">
-                {otherTeam.isConnected === false && (
-                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[var(--radius-lg)] bg-black/70">
-                    <div className="text-center">
-                      <p className="text-lg font-bold text-[var(--error)]">Opponent Disconnected</p>
-                      <p className="text-sm text-[var(--muted-foreground)]">Waiting for them to reconnect...</p>
-                    </div>
-                  </div>
-                )}
-                <TeamCard team={otherTeam} teamIndex={otherTeamIndex} />
-              </motion.div>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex min-h-[200px] items-center justify-center rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--border)]">
-                <p className="text-[var(--muted-foreground)]">Waiting for opponent to join...</p>
-              </motion.div>
-            )}
-          </>
+                <p className="text-sm font-bold text-white/25">Share the code to invite your opponent</p>
+              </div>
+            ) : null}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TeamPanel({
+  team,
+  teamIndex,
+  isEditable,
+  onTeamNameChange,
+  onPlayerNameChange,
+}: {
+  team: RoomTeam;
+  teamIndex: number;
+  isEditable?: boolean;
+  onTeamNameChange?: (name: string) => void;
+  onPlayerNameChange?: (playerId: Id<"players">, name: string) => void;
+}) {
+  const colors = TEAM_COLORS[teamIndex] ?? TEAM_COLORS[0];
+
+  return (
+    <div className={`${colors.bgTintStrong} border-y border-white/[0.04]`}>
+      {/* Team name */}
+      <div className={`${colors.bgGradient} px-5 py-2.5`}>
+        {isEditable && onTeamNameChange ? (
+          <div className="flex justify-center">
+            <EditableName
+              value={team.name}
+              onChange={onTeamNameChange}
+              className="font-display text-center text-lg font-black uppercase tracking-wider text-white"
+              suffix={<Pencil size={14} strokeWidth={2.5} className="text-white/50" />}
+            />
+          </div>
+        ) : (
+          <h3 className="font-display text-center text-lg font-black uppercase tracking-wider text-white">
+            {team.name}
+          </h3>
         )}
       </div>
 
-      {canStart && (
-        <motion.div 
-          className="flex justify-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <Button
-            size="xl"
-            rightIcon={<CaretRight size={24} weight="bold" />}
-            onClick={onStartGame}
-            className="text-xl"
-          >
-            START GAME
-          </Button>
-        </motion.div>
-      )}
+      {/* Player avatars — big, horizontal, game roster style */}
+      <div className="flex items-center justify-center gap-3 px-4 py-4">
+        {team.players.map((player) => {
+          const role = ROLES.find((r) => r.id === player.role);
+          return (
+            <div key={player._id} className="flex flex-col items-center gap-1.5">
+              <div className={`relative h-14 w-14 overflow-hidden rounded-full ring-2 ${colors.ring} sm:h-16 sm:w-16`}>
+                <Image src={player.avatarUrl} alt={player.name} fill className="object-cover" unoptimized />
+              </div>
+              {isEditable && onPlayerNameChange ? (
+                <EditableName
+                  value={player.name}
+                  onChange={(name) => onPlayerNameChange(player._id, name)}
+                  className="max-w-[80px] truncate text-center text-[11px] font-bold text-white/70"
+                />
+              ) : (
+                <span className="max-w-[80px] truncate text-[11px] font-bold text-white/70">{player.name}</span>
+              )}
+              <div className="flex items-center gap-1">
+                {role && <role.Icon size={10} strokeWidth={2.5} className={colors.color} />}
+                <span className="text-[9px] font-bold text-white/30">{role?.label}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
-      {!isHost && room.teams.length === 2 && (
-        <motion.div 
-          className="text-center text-[var(--muted-foreground)]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          Waiting for host to start the game...
-        </motion.div>
-      )}
-    </motion.div>
+function EmptyTeamPanel({ label, color }: { label: string; color: "cyan" | "orange" }) {
+  const bg = color === "cyan" ? "bg-cyan-500/[0.03]" : "bg-orange-500/[0.03]";
+  const dot = color === "cyan" ? "bg-cyan-500/40" : "bg-orange-500/40";
+  return (
+    <div className={`flex min-h-[140px] items-center justify-center border-y border-white/[0.04] ${bg}`}>
+      <div className="flex flex-col items-center gap-3">
+        <motion.div
+          className={`h-3 w-3 rounded-full ${dot}`}
+          animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.8, 0.4] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+        <p className="text-sm font-bold text-white/20">{label}</p>
+      </div>
+    </div>
   );
 }

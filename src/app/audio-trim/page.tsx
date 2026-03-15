@@ -5,15 +5,15 @@ import AppShell from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import {
-  UploadSimple,
+  Upload,
   Scissors,
   Play,
   Pause,
-  DownloadSimple,
-  Waveform,
-  ArrowCounterClockwise,
+  Download,
+  AudioWaveform,
+  RotateCcw,
   Check,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 
 type ProcessingState = "idle" | "loading" | "ready" | "trimming" | "done";
 
@@ -428,9 +428,9 @@ export default function AudioTrimPage() {
                 className="flex cursor-pointer flex-col items-center justify-center gap-4 rounded-[var(--radius-lg)] border-2 border-dashed border-[var(--border)] py-16 transition-all duration-200 hover:border-[var(--accent-primary)] hover:bg-[var(--surface)]"
               >
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent-primary)]/10">
-                  <UploadSimple
+                  <Upload
                     size={28}
-                    weight="bold"
+                    strokeWidth={2.5}
                     className="text-[var(--accent-primary)]"
                   />
                 </div>
@@ -477,7 +477,7 @@ export default function AudioTrimPage() {
               <CardBody>
                 <div className="mb-4 flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--accent-primary)]/10">
-                    <Waveform size={20} weight="bold" className="text-[var(--accent-primary)]" />
+                    <AudioWaveform size={20} strokeWidth={2.5} className="text-[var(--accent-primary)]" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{file?.name}</p>
@@ -596,9 +596,9 @@ export default function AudioTrimPage() {
                     onClick={togglePlaySelection}
                     leftIcon={
                       isPlaying && !playingTrimmed ? (
-                        <Pause size={18} weight="bold" />
+                        <Pause size={18} strokeWidth={2.5} />
                       ) : (
-                        <Play size={18} weight="bold" />
+                        <Play size={18} strokeWidth={2.5} />
                       )
                     }
                   >
@@ -611,7 +611,7 @@ export default function AudioTrimPage() {
                       size="sm"
                       onClick={trimAudio}
                       disabled={state === "trimming"}
-                      leftIcon={<Scissors size={18} weight="bold" />}
+                      leftIcon={<Scissors size={18} strokeWidth={2.5} />}
                     >
                       {state === "trimming" ? "Trimming..." : "Trim Selection"}
                     </Button>
@@ -621,7 +621,7 @@ export default function AudioTrimPage() {
                     variant="ghost"
                     size="sm"
                     onClick={reset}
-                    leftIcon={<ArrowCounterClockwise size={18} weight="bold" />}
+                    leftIcon={<RotateCcw size={18} strokeWidth={2.5} />}
                   >
                     Reset
                   </Button>
@@ -634,7 +634,7 @@ export default function AudioTrimPage() {
                 <CardBody>
                   <div className="mb-4 flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--success)]/10">
-                      <Check size={20} weight="bold" className="text-[var(--success)]" />
+                      <Check size={20} strokeWidth={2.5} className="text-[var(--success)]" />
                     </div>
                     <div>
                       <p className="font-medium">Trimmed Successfully</p>
@@ -678,9 +678,9 @@ export default function AudioTrimPage() {
                       onClick={togglePlayTrimmed}
                       leftIcon={
                         isPlaying && playingTrimmed ? (
-                          <Pause size={18} weight="bold" />
+                          <Pause size={18} strokeWidth={2.5} />
                         ) : (
-                          <Play size={18} weight="bold" />
+                          <Play size={18} strokeWidth={2.5} />
                         )
                       }
                     >
@@ -691,7 +691,7 @@ export default function AudioTrimPage() {
                       variant="primary"
                       size="sm"
                       onClick={downloadTrimmed}
-                      leftIcon={<DownloadSimple size={18} weight="bold" />}
+                      leftIcon={<Download size={18} strokeWidth={2.5} />}
                     >
                       Download WebM
                     </Button>

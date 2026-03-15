@@ -27,8 +27,8 @@ export default function HomePage() {
   }, [router]);
 
   return (
-    <AppShell showFooter={false}>
-      <main className="mx-auto max-w-6xl px-4 py-6 pb-6 sm:px-6 sm:py-8 md:pb-8">
+    <AppShell showFooter>
+      <main className="flex flex-1 flex-col">
         <HomeView
           songCount={songCount ?? 0}
           liveRooms={liveRooms ?? []}

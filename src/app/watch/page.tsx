@@ -5,7 +5,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
+import { Volume2, VolumeX } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ROLES, TEAM_COLORS } from "@/constants/game";
@@ -178,32 +178,36 @@ function WatchPageContent() {
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-black/60 px-6 py-4 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
-            <Image src="/logo.svg" alt="Arkano" width={70} height={58} priority />
-            <span className="text-sm font-bold text-cyan-400">LIVE</span>
+      <header className="sticky top-0 z-30 border-b border-white/8 bg-black/60 px-4 py-3 backdrop-blur-md sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80 active:scale-95">
+            <Image src="/logo.svg" alt="Arkano" width={60} height={50} priority />
+            <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-red-400 shadow-[0_0_6px_rgba(248,113,113,0.15)]">Live</span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setMuted((m) => !m)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/6 text-white/60 transition-colors hover:bg-white/10"
               aria-label={muted ? "Unmute" : "Mute"}
             >
-              {muted ? <SpeakerSlash size={18} weight="bold" /> : <SpeakerHigh size={18} weight="bold" />}
+              {muted ? <VolumeX size={16} strokeWidth={2.5} /> : <Volume2 size={16} strokeWidth={2.5} />}
             </button>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-sm font-bold text-white">
+            <span className="rounded-full bg-white/6 px-2.5 py-1 text-[10px] font-bold text-white/50">
               {audienceCount} watching
             </span>
-            <span className="text-xl font-black tracking-widest text-cyan-400">{code}</span>
+            <span className="font-display text-sm font-black tracking-widest text-cyan-400">{code}</span>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-6 pb-32">
+      <main className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 pb-32 sm:px-6">
         {phase === "waiting" && (
-          <div className="py-16 text-center">
-            <h1 className="text-2xl font-black text-white">Waiting for the game to start</h1>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="mb-4 h-3 w-3 animate-pulse rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.5)]" />
+            <h1 className="font-display text-xl font-black uppercase tracking-wider text-white sm:text-2xl">
+              Waiting for the battle to start
+            </h1>
+            <p className="mt-2 text-sm text-white/30">Get ready to watch and vote</p>
           </div>
         )}
 
@@ -243,8 +247,8 @@ function WatchPageContent() {
             )}
 
             {song?.lyrics && (
-              <div className="rounded-lg border border-white/8 bg-white/5 p-4">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/60 md:text-base">
+              <div className="rounded-2xl border border-white/6 bg-white/3 p-4">
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/40 md:text-base">
                   {song.lyrics}
                 </p>
               </div>
@@ -264,34 +268,34 @@ function WatchPageContent() {
                 <div className="text-center">
                   {total > 0 && !isTie ? (
                     <>
-                      <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                        🏆 {winnerTeam.name} WINS!
+                      <h1 className="font-display text-3xl font-black uppercase tracking-wider text-white text-glow-white sm:text-4xl">
+                        {winnerTeam.name} Wins!
                       </h1>
-                      <p className="mt-1 text-sm text-white/40">
-                        {Math.max(votes0, votes1)} to {Math.min(votes0, votes1)} — Voting is closed
+                      <p className="mt-1 text-sm text-white/30">
+                        {Math.max(votes0, votes1)} to {Math.min(votes0, votes1)} — Voting closed
                       </p>
                     </>
                   ) : total > 0 ? (
                     <>
-                      <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-                        IT&apos;S A TIE!
+                      <h1 className="font-display text-3xl font-black uppercase tracking-wider text-amber-300 text-glow-white sm:text-4xl">
+                        It&apos;s a Tie!
                       </h1>
-                      <p className="mt-1 text-sm text-white/40">
-                        {votes0} to {votes1} — Voting is closed
+                      <p className="mt-1 text-sm text-white/30">
+                        {votes0} to {votes1} — Voting closed
                       </p>
                     </>
                   ) : (
                     <>
-                      <h1 className="text-2xl font-black text-white">Round complete!</h1>
-                      <p className="mt-1 text-sm text-white/40">No votes were cast</p>
+                      <h1 className="font-display text-2xl font-black uppercase tracking-wider text-white">Battle Complete</h1>
+                      <p className="mt-1 text-sm text-white/30">No votes were cast</p>
                     </>
                   )}
                 </div>
               );
             })() : (
               <div className="text-center">
-                <h1 className="text-2xl font-black text-white">Round complete!</h1>
-                <p className="mt-1 animate-pulse text-sm text-cyan-400/70">
+                <h1 className="font-display text-2xl font-black uppercase tracking-wider text-white">Battle Complete</h1>
+                <p className="mt-1 animate-pulse text-sm text-cyan-400/60">
                   Voting is open — cast your vote below!
                 </p>
               </div>
@@ -334,29 +338,27 @@ function WatchPageContent() {
       )}
 
       {phase !== "waiting" && roomData._id && team0 && team1 && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-black/70 px-3 py-3 backdrop-blur-md">
-          <div className="mx-auto flex max-w-2xl items-stretch gap-3">
-            {/* Team 0 reactions */}
-            <div className="flex flex-1 items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-2 py-1.5">
-              <span className="mr-auto truncate text-xs font-bold text-cyan-400">{team0.name}</span>
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/8 bg-black/80 px-3 py-3 backdrop-blur-md">
+          <div className="mx-auto flex max-w-2xl items-stretch gap-2">
+            <div className="flex flex-1 items-center gap-1 rounded-xl border border-cyan-500/15 bg-cyan-500/5 px-2 py-1.5">
+              <span className="mr-auto truncate text-[10px] font-black uppercase text-cyan-400">{team0.name}</span>
               {REACTIONS.map((type) => (
                 <button
                   key={`t0-${type}`}
                   onClick={() => handleEmote(type, team0._id)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-lg transition-all hover:scale-110 hover:bg-white/20 active:scale-90"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/6 text-base transition-all hover:scale-110 hover:bg-white/12 active:scale-90"
                 >
                   {REACTION_LABELS[type]}
                 </button>
               ))}
             </div>
-            {/* Team 1 reactions */}
-            <div className="flex flex-1 items-center gap-1.5 rounded-lg border border-orange-500/20 bg-orange-500/5 px-2 py-1.5">
-              <span className="mr-auto truncate text-xs font-bold text-orange-400">{team1.name}</span>
+            <div className="flex flex-1 items-center gap-1 rounded-xl border border-orange-500/15 bg-orange-500/5 px-2 py-1.5">
+              <span className="mr-auto truncate text-[10px] font-black uppercase text-orange-400">{team1.name}</span>
               {REACTIONS.map((type) => (
                 <button
                   key={`t1-${type}`}
                   onClick={() => handleEmote(type, team1._id)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-lg transition-all hover:scale-110 hover:bg-white/20 active:scale-90"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/6 text-base transition-all hover:scale-110 hover:bg-white/12 active:scale-90"
                 >
                   {REACTION_LABELS[type]}
                 </button>

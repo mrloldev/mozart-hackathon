@@ -71,8 +71,8 @@ function JoinPageContent() {
   }
 
   return (
-    <AppShell showFooter>
-      <main className="mx-auto max-w-lg px-4 py-6 pb-24 sm:px-6 sm:py-8">
+    <AppShell minimal>
+      <main className="flex flex-1 flex-col">
         <CreateTeamView
           teamName={teamName}
           setTeamName={setTeamName}
@@ -80,15 +80,15 @@ function JoinPageContent() {
           setPlayers={setPlayers}
           onBack={() => router.push("/")}
           onSubmit={handleJoin}
-          submitLabel="JOIN ROOM"
+          submitLabel="Join Battle"
           joinCode={joinCode}
           hideBackInStep1
         />
       </main>
 
       {toast && (
-        <div className="fixed bottom-20 left-4 right-4 z-50 animate-modal-enter sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
-          <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-modal)] px-4 py-3 text-sm font-medium text-[var(--foreground)] shadow-xl">
+        <div className="fixed bottom-6 left-4 right-4 z-50 animate-modal-enter sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
+          <div className="rounded-2xl border border-white/8 bg-[#111114] px-4 py-3 text-sm font-bold text-white shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
             {toast}
           </div>
         </div>

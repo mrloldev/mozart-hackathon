@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, PencilSimple, Play, Stop } from "@phosphor-icons/react";
+import { Check, Pencil, Play, Square } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ROLES, TEAM_COLORS } from "@/constants/game";
@@ -76,20 +76,20 @@ function PlayerAudioPreview({
     <button
       type="button"
       onClick={toggle}
-      className="flex w-full items-center gap-2 rounded-md bg-white/5 p-2 transition-colors hover:bg-white/10 active:scale-[0.99]"
+      className="flex w-full items-center gap-2 rounded-lg bg-white/[0.04] p-2 transition-colors hover:bg-white/[0.07] active:scale-[0.99]"
     >
       <div
         className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${colors.bgColor} text-white`}
       >
-        {isPlaying ? <Stop size={12} weight="fill" /> : <Play size={12} weight="fill" />}
+        {isPlaying ? <Square size={10} fill="currentColor" /> : <Play size={10} fill="currentColor" />}
       </div>
       <div className="min-w-0 flex-1">
         <StaticWaveform
           url={recordingUrl}
           progress={prog}
           height={20}
-          barColor="rgba(255,255,255,0.2)"
-          playedColor={teamIndex === 0 ? "rgba(6,182,212,0.85)" : "rgba(249,115,22,0.85)"}
+          barColor="rgba(255,255,255,0.15)"
+          playedColor={colors.playedColor}
         />
       </div>
     </button>
@@ -116,26 +116,30 @@ export default function TeamCard({
   const colors = TEAM_COLORS[teamIndex] ?? TEAM_COLORS[0];
 
   return (
-    <motion.div 
-      className={`rounded-[var(--radius-lg)] overflow-hidden transition-all ${isActive ? `ring-2 ${colors.ring}` : ""}`}
+    <motion.div
+      className={`overflow-hidden rounded-2xl transition-all ${
+        isActive ? `ring-2 ${colors.ring} ${colors.glow}` : "ring-1 ring-white/[0.06]"
+      }`}
       layout
     >
-      <div className={`${colors.bgColor} px-4 py-2`}>
+      {/* Team header with gradient */}
+      <div className={`${colors.bgGradient} px-4 py-2.5`}>
         {isEditable && onTeamNameChange ? (
           <div className="flex justify-center">
             <EditableName
               value={team.name}
               onChange={onTeamNameChange}
-              className="text-center text-lg font-black text-white"
-              suffix={<PencilSimple size={16} weight="bold" className="shrink-0 text-white/80" />}
+              className="text-center text-base font-black uppercase tracking-wider text-white"
+              suffix={<Pencil size={14} strokeWidth={2.5} className="shrink-0 text-white/60" />}
             />
           </div>
         ) : (
-          <h3 className="text-center text-lg font-black text-white">{team.name}</h3>
+          <h3 className="text-center text-base font-black uppercase tracking-wider text-white">{team.name}</h3>
         )}
       </div>
 
-      <div className="bg-[var(--surface)] p-4">
+      {/* Players */}
+      <div className={`${colors.bgTint} p-3`}>
         <div className="flex flex-col gap-2">
           {team.players.map((player) => {
             const role = ROLES.find((r) => r.id === player.role);
@@ -145,15 +149,18 @@ export default function TeamCard({
               <motion.div
                 layout
                 key={player._id}
-                className={`flex items-center gap-3 p-3 transition-all ${
+                className={`flex items-center gap-3 rounded-xl p-2.5 transition-all ${
                   isCurrentTurn
-                    ? `bg-white/10 ring-1 ${colors.ring}`
-                      : player.hasRecorded
-                      ? "bg-[var(--success)]/20"
-                      : "bg-[var(--surface)]"
+                    ? `bg-white/[0.08] ring-1 ${colors.ring}`
+                    : player.hasRecorded
+                      ? "bg-emerald-500/[0.06]"
+                      : "bg-white/[0.02]"
                 }`}
               >
-                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full">
+                {/* Avatar - bigger for game feel */}
+                <div className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-full ring-2 ${
+                  isCurrentTurn ? colors.ring : player.hasRecorded ? "ring-emerald-500/40" : "ring-white/[0.06]"
+                }`}>
                   <Image
                     src={player.avatarUrl}
                     alt={player.name}
@@ -168,7 +175,7 @@ export default function TeamCard({
                       value={player.name}
                       onChange={(name) => onPlayerNameChange(player._id, name)}
                       className="font-bold text-white"
-                      suffix={<PencilSimple size={14} weight="bold" className="shrink-0 text-white/40" />}
+                      suffix={<Pencil size={12} strokeWidth={2.5} className="shrink-0 text-white/30" />}
                     />
                   ) : (
                     <p className="truncate font-bold text-white">{player.name}</p>
@@ -178,19 +185,19 @@ export default function TeamCard({
                       <PlayerAudioPreview recordingUrl={player.recordingUrl} teamIndex={teamIndex} />
                     </div>
                   )}
-                  <p className={`flex items-center gap-1 text-sm text-white/50 ${player.recordingUrl ? "mt-1" : ""}`}>
-                    {role && <role.Icon size={14} weight="bold" className="text-[var(--accent-primary)]" />}
+                  <div className={`flex items-center gap-1.5 text-xs text-white/40 ${player.recordingUrl ? "mt-1" : ""}`}>
+                    {role && <role.Icon size={12} strokeWidth={2.5} className={colors.color} />}
                     <span className="truncate">{role?.label}</span>
                     {player.hasRecorded && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
                       >
-                        <Check size={14} weight="bold" className="ml-1 text-[var(--success)]" />
+                        <Check size={12} strokeWidth={2.5} className="text-emerald-400" />
                       </motion.div>
                     )}
-                  </p>
+                  </div>
                 </div>
               </motion.div>
             );

@@ -6,16 +6,16 @@ import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import {
   Lock,
-  MusicNotesPlus,
-  Trash,
+  ListMusic,
+  Trash2,
   ArrowLeft,
   Check,
-  SpinnerGap,
-  PencilSimple,
-  CaretDown,
-  CaretUp,
+  Loader2,
+  Pencil,
+  ChevronDown,
+  ChevronUp,
   X,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import Link from "next/link";
 import { useUploadThing } from "@/utils/uploadthing";
 
@@ -142,7 +142,7 @@ export default function AdminPage() {
           <div className=" rounded-2xl border border-white/10 bg-white/[0.02] p-8">
             <div className="mb-6 flex justify-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-500/20">
-                <Lock size={28} weight="bold" className="text-amber-400" />
+                <Lock size={28} strokeWidth={2.5} className="text-amber-400" />
               </div>
             </div>
             <h1 className="text-center text-xl font-bold text-white">
@@ -201,7 +201,7 @@ export default function AdminPage() {
       <main className="mx-auto max-w-4xl p-6">
         <div className="mb-10 rounded-2xl border border-white/10 bg-white/[0.02] p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-white">
-            <MusicNotesPlus size={22} weight="bold" className="text-amber-400" />
+            <ListMusic size={22} strokeWidth={2.5} className="text-amber-400" />
             Add song
           </h2>
           <form onSubmit={handleAddSong} className="space-y-4">
@@ -249,12 +249,12 @@ export default function AdminPage() {
             >
               {submitting ? (
                 <>
-                  <SpinnerGap size={20} weight="bold" className="animate-spin" />
+                  <Loader2 size={20} strokeWidth={2.5} className="animate-spin" />
                   Uploading...
                 </>
               ) : (
                 <>
-                  <Check size={20} weight="bold" />
+                  <Check size={20} strokeWidth={2.5} />
                   Add song
                 </>
               )}
@@ -306,9 +306,9 @@ export default function AdminPage() {
                           className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-amber-400 disabled:opacity-50"
                         >
                           {savingId === song._id ? (
-                            <SpinnerGap size={16} weight="bold" className="animate-spin" />
+                            <Loader2 size={16} strokeWidth={2.5} className="animate-spin" />
                           ) : (
-                            <Check size={16} weight="bold" />
+                            <Check size={16} strokeWidth={2.5} />
                           )}
                           Save
                         </button>
@@ -316,7 +316,7 @@ export default function AdminPage() {
                           onClick={handleCancelEdit}
                           className="flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/5"
                         >
-                          <X size={16} weight="bold" />
+                          <X size={16} strokeWidth={2.5} />
                           Cancel
                         </button>
                       </div>
@@ -337,7 +337,7 @@ export default function AdminPage() {
                             className="rounded-lg p-2 text-white/40 transition-colors hover:bg-amber-500/20 hover:text-amber-400"
                             title="Edit"
                           >
-                            <PencilSimple size={18} weight="bold" />
+                            <Pencil size={18} strokeWidth={2.5} />
                           </button>
                           <button
                             onClick={(e) => {
@@ -347,12 +347,12 @@ export default function AdminPage() {
                             className="rounded-lg p-2 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-400"
                             title="Delete"
                           >
-                            <Trash size={18} weight="bold" />
+                            <Trash2 size={18} strokeWidth={2.5} />
                           </button>
                           {expandedId === song._id ? (
-                            <CaretUp size={18} className="text-white/40" />
+                            <ChevronUp size={18} className="text-white/40" />
                           ) : (
-                            <CaretDown size={18} className="text-white/40" />
+                            <ChevronDown size={18} className="text-white/40" />
                           )}
                         </div>
                       </div>

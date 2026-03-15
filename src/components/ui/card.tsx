@@ -1,10 +1,12 @@
 "use client";
 
 const variants = {
-  default: "bg-[var(--surface)] border border-[var(--border)]",
-  elevated: "bg-[var(--surface-elevated)] border border-[var(--border)]",
+  default: "bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm",
+  elevated: "bg-gradient-to-b from-white/[0.06] to-white/[0.02] border border-white/[0.10] shadow-[0_4px_24px_rgba(0,0,0,0.4)] backdrop-blur-md",
   ghost: "bg-transparent",
-  filled: "bg-[var(--surface)]",
+  filled: "bg-white/[0.06]",
+  team0: "bg-gradient-to-b from-cyan-950/50 to-cyan-950/10 border border-cyan-400/15 shadow-[0_0_20px_rgba(34,211,238,0.06)]",
+  team1: "bg-gradient-to-b from-orange-950/50 to-orange-950/10 border border-orange-400/15 shadow-[0_0_20px_rgba(251,146,60,0.06)]",
 };
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -33,7 +35,7 @@ export function CardHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`border-b border-[var(--border)] px-5 py-4 ${className}`}
+      className={`border-b border-white/[0.08] px-5 py-4 ${className}`}
       {...props}
     />
   );
@@ -52,7 +54,7 @@ export function CardFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`border-t border-[var(--border)] p-4 ${className}`}
+      className={`border-t border-white/[0.08] p-4 ${className}`}
       {...props}
     />
   );

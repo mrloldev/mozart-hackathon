@@ -1,9 +1,11 @@
 "use client";
 
-import { CaretRight } from "@phosphor-icons/react";
+import { Zap } from "lucide-react";
 import { useState } from "react";
+import { motion } from "framer-motion";
 import type { LocalTeam } from "@/types/game";
 import LocalTeamCard from "./local-team-card";
+import { Button } from "@/components/ui";
 
 export default function LocalGameView({
   teams,
@@ -39,17 +41,21 @@ export default function LocalGameView({
   };
 
   return (
-    <div className="space-y-8">
+    <motion.div
+      className="mx-auto max-w-lg space-y-6 lg:max-w-3xl"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
       <div className="text-center">
-        <h2 className="text-2xl font-black uppercase tracking-wider text-white">
-          Local Battle Setup
+        <h2 className="font-display text-xl font-black uppercase tracking-wider text-white">
+          Local Battle
         </h2>
-        <p className="mt-1 text-white/50">
+        <p className="mt-1 text-sm text-white/35">
           Both teams on one screen — pass the phone each turn
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="space-y-3">
         {teams.map((team, index) => (
           <LocalTeamCard
             key={team.id}
@@ -62,16 +68,16 @@ export default function LocalGameView({
         ))}
       </div>
 
-      <div className="flex flex-col items-center gap-4">
-        <button
-          onClick={handleStart}
-          disabled={starting}
-          className="flex items-center gap-3 bg-cyan-500 px-12 py-4 text-xl font-black text-white transition-colors hover:bg-cyan-400 disabled:opacity-60"
-        >
-          <CaretRight size={24} weight="bold" />
-          {starting ? "STARTING…" : "START BATTLE"}
-        </button>
-      </div>
-    </div>
+      <Button
+        size="xl"
+        fullWidth
+        onClick={handleStart}
+        disabled={starting}
+        rightIcon={<Zap size={24} fill="currentColor" />}
+        className="animate-game-pulse"
+      >
+        {starting ? "Starting..." : "Start Battle"}
+      </Button>
+    </motion.div>
   );
 }

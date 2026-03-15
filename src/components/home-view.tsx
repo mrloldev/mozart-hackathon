@@ -1,27 +1,20 @@
 "use client";
 
-import { DeviceMobile, Sparkle, Television, Users } from "@phosphor-icons/react";
+import { Zap, ArrowRight, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { ActionCard, Badge, Button } from "@/components/ui";
 import { getRoomSessionForCode } from "@/lib/room-session";
+import { ROLES } from "@/constants/game";
 
-type LiveRoom = { code: string; phase: string; isPublic?: boolean; createdAt: number };
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } },
+type LiveRoom = {
+  code: string;
+  phase: string;
+  isPublic?: boolean;
+  createdAt: number;
+  currentRoleIndex?: number;
+  currentTeamTurn?: number;
+  teams?: { name: string; _id: string }[];
 };
 
 export default function HomeView({
@@ -56,124 +49,191 @@ export default function HomeView({
   }, [liveRooms]);
 
   return (
-    <motion.div 
-      className="px-6 py-16 md:px-8"
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-    >
-      <div className="mx-auto max-w-4xl">
-        <motion.div variants={itemVariants} className="mb-10 text-center md:mb-12">
-          <p className="font-display mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--accent-primary)]">
-            Multiplayer Music Game
-          </p>
-          <h2 className="font-display text-3xl font-extrabold leading-tight text-[var(--foreground)] md:text-4xl">
-            Create music together.
+    <div className="flex flex-1 flex-col items-center justify-center px-5">
+      <div className="w-full max-w-sm lg:max-w-lg">
+        {/* Hero — massive game title */}
+        <motion.div
+          className="mb-10 text-center"
+          initial={{ opacity: 0, y: 30, scale: 0.92 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 18, delay: 0.05 }}
+        >
+          <motion.p
+            className="mb-3 text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400/70"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            3 vs 3 Music Battle
+          </motion.p>
+          <h1 className="font-display text-5xl font-black uppercase leading-[0.9] tracking-tight text-white sm:text-6xl">
+            Create
             <br />
-            <span className="text-[var(--muted)]">Compete to win.</span>
-          </h2>
-          <p className="mt-4 text-sm text-[var(--muted-foreground)] md:hidden">
-            Watch a current play or create yours.
-          </p>
-          <p className="mt-4 hidden text-sm text-[var(--muted-foreground)] md:block">
-            Two teams, three players each. Random song. Record beats, melody, vocals.
-          </p>
+            <span className="bg-gradient-to-r from-cyan-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
+              Music
+            </span>
+          </h1>
+          <motion.p
+            className="mt-3 text-base font-bold text-white/25"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            Record. Mix. Crush your rivals.
+          </motion.p>
         </motion.div>
 
-        <div className="flex flex-col gap-10 md:flex-row md:items-start md:justify-center md:gap-12">
-          {liveRooms.length > 0 && (
-            <motion.div variants={itemVariants} className="flex-1 md:min-w-[280px]">
-              <div className="mb-4 flex items-center gap-3">
-                <h3 className="font-display text-sm font-bold uppercase tracking-wider text-[var(--foreground)]">
-                  Watch current players
-                </h3>
-                <div className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-bold tracking-widest text-red-500">
-                  <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-                  LIVE NOW
-                </div>
+        {/* Main action buttons */}
+        <motion.div
+          className="space-y-3"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          {/* Primary: Quick Play */}
+          <button
+            onClick={onLocalPlay}
+            disabled={!hasSongs}
+            className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 p-[1px] transition-all active:scale-[0.97] disabled:opacity-30"
+          >
+            <div className="relative flex items-center gap-4 rounded-[15px] bg-gradient-to-br from-cyan-500/20 to-blue-600/10 px-5 py-5 backdrop-blur-sm">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+                <Zap size={28} fill="currentColor" />
               </div>
-              <div className="space-y-2">
-                {liveRooms.map((r, i) => (
-                  <motion.div
+              <div className="flex-1 text-left">
+                <p className="font-display text-lg font-black uppercase tracking-wide text-white">
+                  Quick Play
+                </p>
+                <p className="text-sm font-medium text-white/50">
+                  {hasSongs ? "Same device · pass & play" : "Add songs in admin first"}
+                </p>
+              </div>
+              <ArrowRight size={20} className="text-white/40 transition-transform group-hover:translate-x-1" />
+            </div>
+          </button>
+
+          {/* Create + Join side by side */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={onCreateTeam}
+              disabled={!hasSongs}
+              className="group flex flex-col items-center gap-2.5 rounded-2xl border border-white/10 bg-white/4 px-4 py-5 transition-all hover:border-white/20 hover:bg-white/7 active:scale-[0.97] disabled:opacity-30"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/10 text-purple-400">
+                <Sparkles size={24} />
+              </div>
+              <div className="text-center">
+                <p className="font-display text-sm font-black uppercase tracking-wide text-white">Create</p>
+                <p className="mt-0.5 text-[11px] text-white/30">Host a room</p>
+              </div>
+            </button>
+
+            <button
+              onClick={onJoinRoom}
+              className="group flex flex-col items-center gap-2.5 rounded-2xl border border-white/10 bg-white/4 px-4 py-5 transition-all hover:border-white/20 hover:bg-white/7 active:scale-[0.97]"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 text-orange-400">
+                <Users size={24} />
+              </div>
+              <div className="text-center">
+                <p className="font-display text-sm font-black uppercase tracking-wide text-white">Join</p>
+                <p className="mt-0.5 text-[11px] text-white/30">Enter a code</p>
+              </div>
+            </button>
+          </div>
+        </motion.div>
+
+        {/* Live battles — grid below actions */}
+        {liveRooms.length > 0 && (
+          <motion.div
+            className="mt-6"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-2.5 py-1 shadow-[0_0_8px_rgba(248,113,113,0.15)]">
+                <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-red-400">Live</span>
+              </div>
+              <span className="text-[10px] font-bold text-white/20">
+                {liveRooms.length} battle{liveRooms.length > 1 ? "s" : ""} happening now
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {liveRooms.map((r) => {
+                const currentRole = r.currentRoleIndex !== undefined ? ROLES[r.currentRoleIndex] : null;
+                const team0 = r.teams?.[0];
+                const team1 = r.teams?.[1];
+                const isResults = r.phase === "results";
+
+                return (
+                  <Link
                     key={r.code}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 + 0.3 }}
+                    href={sessionHrefs[r.code] ?? (r.isPublic ? `/watch?code=${r.code}` : `/join?code=${r.code}`)}
+                    className="group overflow-hidden rounded-2xl border border-white/8 bg-white/3 transition-all hover:border-cyan-400/20 hover:bg-white/5 active:scale-[0.97]"
                   >
-                    <Link
-                      href={sessionHrefs[r.code] ?? (r.isPublic ? `/watch?code=${r.code}` : `/join?code=${r.code}`)}
-                      className="flex items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 transition-all hover:scale-[1.02] hover:border-[var(--accent-primary)] hover:bg-[var(--surface-hover)] active:scale-[0.98]"
-                    >
-                      <span className="font-display font-bold tracking-wider text-[var(--foreground)]">
-                        {r.code}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <Badge variant="primary">Playing</Badge>
-                        {r.isPublic && (
-                          <span title="Public - audience can watch">
-                            <Television size={16} weight="fill" className="text-[var(--muted-foreground)]" />
-                          </span>
+                    {/* Mini scoreboard header */}
+                    <div className="flex items-center justify-between border-b border-white/5 px-3 py-2">
+                      <span className="font-display text-[11px] font-black tracking-widest text-cyan-400">{r.code}</span>
+                      <div className="flex items-center gap-1">
+                        {!isResults && (
+                          <div className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.5)]" />
                         )}
-                      </span>
-                    </Link>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
+                        <span className="text-[9px] font-bold uppercase text-white/25">
+                          {isResults ? "Done" : "Playing"}
+                        </span>
+                      </div>
+                    </div>
 
-          <motion.div variants={itemVariants} className={`flex-1 space-y-3 md:min-w-[280px] ${liveRooms.length > 0 ? "" : "md:max-w-md md:mx-auto"}`}>
-            {liveRooms.length > 0 && (
-              <h3 className="mb-4 hidden font-display text-sm font-bold uppercase tracking-wider text-[var(--foreground)] md:block">
-                Or play yourself
-              </h3>
-            )}
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <ActionCard
-                icon={<DeviceMobile size={20} weight="bold" />}
-                title="Local Play"
-                description={hasSongs ? "Both teams · random song" : "Add songs in admin first"}
-                onClick={onLocalPlay}
-                disabled={!hasSongs}
-              />
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <ActionCard
-                icon={<Sparkle size={20} weight="bold" />}
-                title="Create Room"
-                description={hasSongs ? "Host online · random song" : "Add songs in admin first"}
-                onClick={onCreateTeam}
-                disabled={!hasSongs}
-              />
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <ActionCard
-                icon={<Users size={20} weight="bold" />}
-                title="Join Room"
-                description="Enter a 6-letter code"
-                onClick={onJoinRoom}
-              />
-            </motion.div>
+                    {/* Teams vs display */}
+                    <div className="px-3 py-2.5">
+                      {team0 && team1 ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="flex-1 truncate text-[11px] font-black text-cyan-400/80">{team0.name}</span>
+                          <span className="text-[9px] font-bold text-white/15">vs</span>
+                          <span className="flex-1 truncate text-right text-[11px] font-black text-orange-400/80">{team1.name}</span>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] font-bold text-white/20">Waiting for teams...</p>
+                      )}
+
+                      {/* Current role indicator */}
+                      {currentRole && !isResults && (
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <currentRole.Icon size={10} className="text-white/25" />
+                          <span className="text-[9px] font-bold text-white/20">
+                            {currentRole.label}
+                            {r.currentTeamTurn !== undefined && r.teams?.[r.currentTeamTurn] && (
+                              <> · {r.teams[r.currentTeamTurn].name}</>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           </motion.div>
-        </div>
+        )}
 
-        <motion.div variants={itemVariants} className="mt-10 flex flex-col items-center gap-3">
-          <Button
-            variant="ghost"
-            fullWidth
+        {/* Rules link */}
+        <motion.div
+          className="mt-8 text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <button
             onClick={onOpenRules}
-            className="py-4"
+            className="text-xs font-bold uppercase tracking-widest text-white/20 transition-colors hover:text-white/40"
           >
-            How does it work?
-          </Button>
-          <Link
-            href="/admin"
-            className="text-xs text-[var(--muted-foreground)] transition-colors hover:text-[var(--muted)]"
-          >
-            Admin
-          </Link>
+            How to Play
+          </button>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }

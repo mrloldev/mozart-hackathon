@@ -1,33 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  --background: #070708;
-  --foreground: #f4f4f5;
-  --muted: rgba(255, 255, 255, 0.5);
-  --muted-foreground: rgba(255, 255, 255, 0.4);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.15);
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-hover: rgba(255, 255, 255, 0.07);
-  --surface-elevated: rgba(255, 255, 255, 0.06);
-  --surface-modal: #141416;
-  --accent-primary: #06b6d4;
-  --accent-primary-hover: #22d3ee;
-  --accent-secondary: #f97316;
-  --accent-secondary-hover: #fb923c;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
+  --background: #050507;
+  --foreground: #f0f0f2;
+  --muted: rgba(255, 255, 255, 0.55);
+  --muted-foreground: rgba(255, 255, 255, 0.35);
+  --border: rgba(255, 255, 255, 0.10);
+  --border-hover: rgba(255, 255, 255, 0.20);
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-hover: rgba(255, 255, 255, 0.10);
+  --surface-elevated: rgba(255, 255, 255, 0.08);
+  --surface-modal: #111114;
+  --accent-primary: #22d3ee;
+  --accent-primary-hover: #67e8f9;
+  --accent-secondary: #fb923c;
+  --accent-secondary-hover: #fdba74;
+  --success: #34d399;
+  --warning: #fbbf24;
+  --error: #f87171;
+
+  --team-cyan: #22d3ee;
+  --team-cyan-deep: #0891b2;
+  --team-cyan-glow: rgba(34, 211, 238, 0.35);
+  --team-orange: #fb923c;
+  --team-orange-deep: #ea580c;
+  --team-orange-glow: rgba(251, 146, 60, 0.35);
+
   --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --transition-fast: 150ms var(--ease-out);
-  --transition-base: 200ms var(--ease-out);
-  --transition-slow: 300ms var(--ease-out);
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+
+  --ease-out-quint: cubic-bezier(.23, 1, .32, 1);
+  --ease-out-back: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-in-out-cubic: cubic-bezier(.645, .045, .355, 1);
+  --ease-out-cubic: cubic-bezier(.33, 1, .68, 1);
+
+  --transition-fast: 150ms var(--ease-out-quint);
+  --transition-base: 200ms var(--ease-out-quint);
+  --transition-slow: 300ms var(--ease-out-quint);
 }
 
 @theme inline {
@@ -44,6 +56,7 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
 }
 
 .touch-target {
@@ -55,8 +68,40 @@ body {
   font-family: var(--font-syne), var(--font-dm-sans), system-ui, sans-serif;
 }
 
+/* ── Game-specific utility classes ── */
+
+.game-glow-cyan {
+  box-shadow: 0 0 24px var(--team-cyan-glow), 0 0 60px rgba(34, 211, 238, 0.12);
+}
+
+.game-glow-orange {
+  box-shadow: 0 0 24px var(--team-orange-glow), 0 0 60px rgba(251, 146, 60, 0.12);
+}
+
+.game-glow-cyan-strong {
+  box-shadow: 0 0 40px var(--team-cyan-glow), 0 0 80px rgba(34, 211, 238, 0.2);
+}
+
+.game-glow-orange-strong {
+  box-shadow: 0 0 40px var(--team-orange-glow), 0 0 80px rgba(251, 146, 60, 0.2);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.6), 0 0 40px rgba(34, 211, 238, 0.2);
+}
+
+.text-glow-orange {
+  text-shadow: 0 0 12px rgba(251, 146, 60, 0.6), 0 0 40px rgba(251, 146, 60, 0.2);
+}
+
+.text-glow-white {
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.4), 0 0 40px rgba(255, 255, 255, 0.1);
+}
+
+/* ── Keyframes ── */
+
 @keyframes modal-enter {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
@@ -72,12 +117,17 @@ body {
 
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  50% { opacity: 0.4; }
 }
 
-@keyframes arkano-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4); }
-  50% { box-shadow: 0 0 0 14px rgba(6, 182, 212, 0); }
+@keyframes game-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--team-cyan-glow); }
+  50% { box-shadow: 0 0 0 16px rgba(34, 211, 238, 0); }
+}
+
+@keyframes game-pulse-orange {
+  0%, 100% { box-shadow: 0 0 0 0 var(--team-orange-glow); }
+  50% { box-shadow: 0 0 0 16px rgba(251, 146, 60, 0); }
 }
 
 @keyframes float-up {
@@ -98,12 +148,59 @@ body {
 }
 
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slam-in {
+  0% { opacity: 0; transform: scale(1.3); }
+  60% { opacity: 1; transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes count-up-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes screen-flash {
+  0% { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+@keyframes text-reveal {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes vs-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.08); filter: brightness(1.3); }
+}
+
+/* ── Animation classes ── */
+
 .animate-modal-enter {
-  animation: modal-enter var(--transition-slow) var(--ease-out) forwards;
+  animation: modal-enter var(--transition-slow) var(--ease-out-quint) forwards;
 }
 
 .animate-modal-backdrop-enter {
@@ -119,8 +216,12 @@ body {
   animation: pulse-dot 1.5s ease-in-out infinite;
 }
 
-.animate-arkano-pulse {
-  animation: arkano-pulse 2s ease-in-out infinite;
+.animate-game-pulse {
+  animation: game-pulse 2s ease-in-out infinite;
+}
+
+.animate-game-pulse-orange {
+  animation: game-pulse-orange 2s ease-in-out infinite;
 }
 
 .animate-float-up {
@@ -139,7 +240,35 @@ body {
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up var(--transition-slow) var(--ease-out) forwards;
+  animation: fade-in-up var(--transition-slow) var(--ease-out-quint) forwards;
+}
+
+.animate-slam-in {
+  animation: slam-in 0.5s var(--ease-out-quint) forwards;
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+.animate-glow-breathe {
+  animation: glow-breathe 3s ease-in-out infinite;
+}
+
+.animate-vs-pulse {
+  animation: vs-pulse 2s ease-in-out infinite;
+}
+
+.animate-screen-flash {
+  animation: screen-flash 0.3s ease-out forwards;
+  pointer-events: none;
+}
+
+.animate-text-reveal span {
+  display: inline-block;
+  animation: text-reveal 0.8s var(--ease-out-quint);
+  animation-fill-mode: backwards;
+  animation-delay: calc(var(--index) * 0.04s);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -147,11 +276,17 @@ body {
   .animate-modal-backdrop-enter,
   .animate-waveform-bar,
   .animate-pulse-dot,
-  .animate-arkano-pulse,
+  .animate-game-pulse,
+  .animate-game-pulse-orange,
   .animate-float-up,
   .animate-float-up-far,
   .animate-float-down,
-  .animate-fade-in-up {
+  .animate-fade-in-up,
+  .animate-slam-in,
+  .animate-shake,
+  .animate-glow-breathe,
+  .animate-vs-pulse,
+  .animate-screen-flash {
     animation-duration: 0.01ms !important;
   }
 }

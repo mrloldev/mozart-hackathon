@@ -111,8 +111,8 @@ export default function LocalPage() {
       };
 
     return (
-      <AppShell showFooter>
-        <main className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:px-6 sm:py-8">
+      <AppShell minimal>
+        <main className="mx-auto flex flex-1 max-w-6xl flex-col overflow-hidden px-4 py-2 sm:px-6 sm:py-3">
           <GameView
             room={localRoom as Parameters<typeof GameView>[0]["room"]}
             teamId={activeTeamId}
@@ -121,8 +121,8 @@ export default function LocalPage() {
         </main>
 
         {toast && (
-          <div className="fixed bottom-20 left-4 right-4 z-50 animate-modal-enter sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
-            <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-modal)] px-4 py-3 text-sm font-medium text-[var(--foreground)] shadow-xl">
+          <div className="fixed bottom-6 left-4 right-4 z-50 animate-modal-enter sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
+            <div className="rounded-2xl border border-white/8 bg-[#111114] px-4 py-3 text-sm font-bold text-white shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
               {toast}
             </div>
           </div>
@@ -132,8 +132,8 @@ export default function LocalPage() {
   }
 
   return (
-    <AppShell showFooter>
-      <main className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:px-6 sm:py-8">
+    <AppShell minimal>
+      <main className="flex flex-1 flex-col px-4 py-4">
         <LocalGameView
           teams={localTeams}
           setTeams={setLocalTeams}
@@ -142,8 +142,8 @@ export default function LocalPage() {
       </main>
 
       {toast && (
-        <div className="fixed bottom-20 left-4 right-4 z-50 animate-modal-enter sm:bottom-6 sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
-          <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-modal)] px-4 py-3 text-sm font-medium text-[var(--foreground)] shadow-xl">
+        <div className="fixed bottom-6 left-4 right-4 z-50 animate-modal-enter sm:left-1/2 sm:right-auto sm:w-auto sm:-translate-x-1/2">
+          <div className="rounded-2xl border border-white/8 bg-[#111114] px-4 py-3 text-sm font-bold text-white shadow-[0_4px_24px_rgba(0,0,0,0.5)]">
             {toast}
           </div>
         </div>

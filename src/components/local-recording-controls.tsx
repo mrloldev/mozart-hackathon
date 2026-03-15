@@ -1,6 +1,6 @@
 "use client";
 
-import { Microphone, Stop } from "@phosphor-icons/react";
+import { Mic, Square } from "lucide-react";
 import Image from "next/image";
 import { ROLE_CHALLENGE, TEAM_COLORS, MAX_RECORDING_TIME } from "@/constants/game";
 import type { LocalPlayer, Role } from "@/types/game";
@@ -53,7 +53,7 @@ export default function LocalRecordingControls({
             onClick={onStopRecording}
             className="flex items-center gap-2 bg-white/10 px-4 py-2 text-sm font-bold text-white transition-all hover:bg-white/20"
           >
-            <Stop size={16} weight="fill" />
+            <Square size={16} fill="currentColor" />
             STOP
           </button>
         </div>
@@ -62,7 +62,7 @@ export default function LocalRecordingControls({
           onClick={onStartRecording}
           className="flex items-center gap-2 bg-red-500 px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-red-400"
         >
-          <Microphone size={18} weight="fill" />
+          <Mic size={18} />
           RECORD
         </button>
       )}
