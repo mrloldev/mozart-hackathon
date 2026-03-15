@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import { api } from "../../convex/_generated/api";
 import { ROLES, TEAM_COLORS } from "@/constants/game";
@@ -50,6 +50,10 @@ export default function GameView({
   teamId: Id<"teams">;
   onRecordComplete: (playerId: Id<"players">, blob: Blob) => Promise<void>;
 }) {
+  const skipTurnMutation = useMutation(api.rooms.skipTurn);
+  const showSkipButton =
+    process.env.NEXT_PUBLIC_VERCEL_ENV !== "production";
+
   const audienceCount = useQuery(
     api.audience.getAudienceCount,
     room.isPublic ? { roomId: room._id } : "skip",
@@ -142,6 +146,20 @@ export default function GameView({
                   currentRole={currentRole}
                   onRecordingComplete={handleRecordingComplete}
                 />
+                {showSkipButton && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      skipTurnMutation({
+                        playerId: currentPlayer._id,
+                        roomId: room._id,
+                      })
+                    }
+                    className="mt-2 w-full rounded border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 hover:bg-white/10"
+                  >
+                    Skip turn
+                  </button>
+                )}
               </div>
             </motion.div>
           );

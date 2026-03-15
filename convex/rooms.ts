@@ -156,20 +156,38 @@ export const getRoom = query({
 
     const teamsWithPlayers = await Promise.all(
       teams.map(async (team) => {
-        const players = await ctx.db
-          .query("players")
-          .withIndex("by_team", (q) => q.eq("teamId", team._id))
-          .collect();
+        const [players, recordings] = await Promise.all([
+          ctx.db.query("players").withIndex("by_team", (q) => q.eq("teamId", team._id)).collect(),
+          ctx.db
+            .query("recordings")
+            .withIndex("by_room_team_role", (q) =>
+              q.eq("roomId", room._id).eq("teamId", team._id)
+            )
+            .collect(),
+        ]);
+
+        const recordingsByRole: Record<string, string | null> = {};
+        for (const r of recordings) {
+          let url = r.fileUrl ?? null;
+          if (!url && r.storageId) {
+            url = await ctx.storage.getUrl(r.storageId as any);
+          }
+          if (url) recordingsByRole[r.role] = url;
+        }
+
         const playersWithUrls = await Promise.all(
           players.map(async (p) => {
-            let url = p.recordingUrl ?? null;
+            let url = p.recordingUrl ?? recordingsByRole[p.role] ?? null;
             if (!url && p.recordingStorageId) {
               url = await ctx.storage.getUrl(p.recordingStorageId as any);
             }
             return { ...p, recordingUrl: url };
           })
         );
-        return { ...team, players: playersWithUrls };
+        const trackUrls = (["beat", "melody", "vocals"] as const).map(
+          (role) => recordingsByRole[role] ?? playersWithUrls.find((p) => p.role === role)?.recordingUrl ?? null
+        );
+        return { ...team, players: playersWithUrls, trackUrls };
       })
     );
 
@@ -350,6 +368,37 @@ export const recordComplete = mutation({
   },
 });
 
+function advanceTurn(ctx: any, roomId: string, room: any) {
+  const roles = ["beat", "melody", "vocals"] as const;
+  let { currentRoleIndex, currentTeamTurn } = room;
+  if (currentTeamTurn === 0) {
+    currentTeamTurn = 1;
+  } else {
+    currentTeamTurn = 0;
+    if (currentRoleIndex < roles.length - 1) {
+      currentRoleIndex++;
+    } else {
+      return ctx.db.patch(roomId, { phase: "results" });
+    }
+  }
+  return ctx.db.patch(roomId, { currentRoleIndex, currentTeamTurn });
+}
+
+export const skipTurn = mutation({
+  args: {
+    playerId: v.id("players"),
+    roomId: v.id("rooms"),
+  },
+  handler: async (ctx, args) => {
+    const player = await ctx.db.get(args.playerId);
+    if (!player) throw new Error("Player not found");
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error("Room not found");
+    await ctx.db.patch(args.playerId, { hasRecorded: true });
+    await advanceTurn(ctx, args.roomId, room);
+  },
+});
+
 export const getBeatRecordingForTeam = internalQuery({
   args: { roomId: v.id("rooms"), teamId: v.id("teams") },
   handler: async (ctx, args) => {
@@ -452,6 +501,53 @@ export const updateGeneratedAudio = internalMutation({
         prompt: args.prompt,
         createdAt: Date.now(),
       });
+    }
+  },
+});
+
+export const updateGeneratedInstrumental = internalMutation({
+  args: {
+    roomId: v.id("rooms"),
+    teamId: v.id("teams"),
+    fileUrl: v.string(),
+    prompt: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_team", (q) => q.eq("teamId", args.teamId))
+      .collect();
+    for (const p of players) {
+      if (p.role === "beat" || p.role === "melody") {
+        await ctx.db.patch(p._id, { recordingUrl: args.fileUrl });
+      }
+    }
+
+    for (const role of ["beat", "melody"] as const) {
+      const existing = await ctx.db
+        .query("recordings")
+        .withIndex("by_room_team_role", (q) =>
+          q.eq("roomId", args.roomId).eq("teamId", args.teamId).eq("role", role)
+        )
+        .first();
+      if (existing) {
+        await ctx.db.patch(existing._id, { fileUrl: args.fileUrl, prompt: args.prompt });
+      } else {
+        const beatPlayer = players.find((p) => p.role === "beat");
+        const melodyPlayer = players.find((p) => p.role === "melody");
+        const playerId = role === "beat" ? beatPlayer?._id : melodyPlayer?._id;
+        if (playerId) {
+          await ctx.db.insert("recordings", {
+            roomId: args.roomId,
+            teamId: args.teamId,
+            playerId,
+            fileUrl: args.fileUrl,
+            role,
+            prompt: args.prompt,
+            createdAt: Date.now(),
+          });
+        }
+      }
     }
   },
 });

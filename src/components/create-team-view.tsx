@@ -23,6 +23,7 @@ export default function CreateTeamView({
   joinCode,
   isPublic,
   setIsPublic,
+  hideBackInStep1,
 }: {
   teamName: string;
   setTeamName: (v: string) => void;
@@ -34,6 +35,7 @@ export default function CreateTeamView({
   joinCode?: string;
   isPublic?: boolean;
   setIsPublic?: (v: boolean) => void;
+  hideBackInStep1?: boolean;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
 
@@ -155,9 +157,11 @@ export default function CreateTeamView({
           exit={{ opacity: 0, x: 20 }}
           transition={{ duration: 0.3 }}
         >
-          <Button variant="ghost" size="sm" onClick={handleBack}>
-            ← Back
-          </Button>
+          {!hideBackInStep1 && (
+            <Button variant="ghost" size="sm" onClick={handleBack}>
+              ← Back
+            </Button>
+          )}
 
           <div>
             <h2 className="font-display text-2xl font-black uppercase tracking-wider text-[var(--foreground)]">

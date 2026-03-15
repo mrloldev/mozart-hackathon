@@ -47,7 +47,7 @@ export default function LocalRecordingControls({
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-col items-center gap-2">
             <RecordingWaveform />
-            <span className="text-sm font-bold text-white/80">{30 - recordingTime}s left</span>
+            <span className="text-sm font-bold text-white/80">{15 - recordingTime}s left</span>
           </div>
           <button
             onClick={onStopRecording}

@@ -79,7 +79,7 @@ export const castVote = mutation({
     const existing = await ctx.db
       .query("votes")
       .withIndex("by_session_room", (q) =>
-        q.eq("sessionId", args.sessionId).eq("roomId", args.roomId)
+        q.eq("sessionId", args.sessionId).eq("roomId", args.roomId),
       )
       .first();
 
@@ -109,7 +109,7 @@ export const sendEmote = mutation({
       v.literal("fire"),
       v.literal("heart"),
       v.literal("clap"),
-      v.literal("skull")
+      v.literal("skull"),
     ),
   },
   handler: async (ctx, args) => {
@@ -134,21 +134,40 @@ async function getRoomWithTeams(ctx: any, roomId: Id<"rooms">) {
 
   const teamsWithPlayers = await Promise.all(
     teams.map(async (team: any) => {
-      const players = await ctx.db
-        .query("players")
-        .withIndex("by_team", (q: any) => q.eq("teamId", team._id))
-        .collect();
+      const [players, recordings] = await Promise.all([
+        ctx.db.query("players").withIndex("by_team", (q: any) => q.eq("teamId", team._id)).collect(),
+        ctx.db
+          .query("recordings")
+          .withIndex("by_room_team_role", (q: any) =>
+            q.eq("roomId", roomId).eq("teamId", team._id)
+          )
+          .collect(),
+      ]);
+
+      const recordingsByRole: Record<string, string | null> = {};
+      for (const r of recordings) {
+        let url = r.fileUrl ?? null;
+        if (!url && r.storageId) {
+          url = await ctx.storage.getUrl(r.storageId as any);
+        }
+        if (url) recordingsByRole[r.role] = url;
+      }
+
       const playersWithUrls = await Promise.all(
         players.map(async (p: any) => {
-          let url = p.recordingUrl ?? null;
+          let url = p.recordingUrl ?? recordingsByRole[p.role] ?? null;
           if (!url && p.recordingStorageId) {
-            url = await ctx.storage.getUrl(p.recordingStorageId);
+            url = await ctx.storage.getUrl(p.recordingStorageId as any);
           }
           return { ...p, recordingUrl: url };
-        })
+        }),
       );
-      return { ...team, players: playersWithUrls };
-    })
+      const trackUrls = (["beat", "melody", "vocals"] as const).map(
+        (role) =>
+          recordingsByRole[role] ?? playersWithUrls.find((p: any) => p.role === role)?.recordingUrl ?? null
+      );
+      return { ...team, players: playersWithUrls, trackUrls };
+    }),
   );
 
   let song = null;
@@ -229,7 +248,7 @@ export const getMyVote = query({
     const vote = await ctx.db
       .query("votes")
       .withIndex("by_session_room", (q) =>
-        q.eq("sessionId", args.sessionId).eq("roomId", args.roomId)
+        q.eq("sessionId", args.sessionId).eq("roomId", args.roomId),
       )
       .first();
     return vote?.teamId ?? null;
@@ -266,7 +285,10 @@ export const cleanOldEmotes = internalMutation({
   args: {},
   handler: async (ctx) => {
     const cutoff = Date.now() - 60000;
-    const old = await ctx.db.query("emotes").filter((q) => q.lt(q.field("createdAt"), cutoff)).collect();
+    const old = await ctx.db
+      .query("emotes")
+      .filter((q) => q.lt(q.field("createdAt"), cutoff))
+      .collect();
     for (const e of old) {
       await ctx.db.delete(e._id);
     }

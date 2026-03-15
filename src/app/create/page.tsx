@@ -167,7 +167,7 @@ export default function CreatePage() {
           setPlayers={setPlayers}
           isPublic={isPublic}
           setIsPublic={setIsPublic}
-          onBack={() => router.push("/")}
+          onBack={() => setHostChoice(null)}
           onSubmit={handleCreateRoom}
           submitLabel="CREATE ROOM"
         />

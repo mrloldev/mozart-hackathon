@@ -25,7 +25,7 @@ export default function RulesModal({ onClose }: { onClose: () => void }) {
             {
               step: 2,
               title: "Record",
-              desc: "Teams alternate. Beat makers go first, then melody, then vocals. 30 seconds each.",
+              desc: "Teams alternate. Beat makers go first, then melody, then vocals. 15 seconds each.",
             },
             {
               step: 3,

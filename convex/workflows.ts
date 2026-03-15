@@ -3,44 +3,44 @@ import { mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { workflow } from "./workflow";
 
-const DEFAULT_BEAT_PROMPT = "Create an energetic music battle beat with punchy kick drum, snappy snare, and driving rhythm";
-
-export const beatWorkflow = workflow.define({
+export const instrumentalWorkflow = workflow.define({
   args: {
     roomId: v.id("rooms"),
     teamId: v.id("teams"),
-    playerId: v.id("players"),
+    melodyPlayerId: v.id("players"),
     prompt: v.optional(v.string()),
+    mixedAudioUrl: v.string(),
   },
   handler: async (step, args): Promise<void> => {
-    console.log("[beatWorkflow] Started", { roomId: args.roomId, teamId: args.teamId, playerId: args.playerId });
-    const elevenLabsPrompt = await step.runAction(
-      internal.actions.openRouterPrompt,
-      { userPrompt: args.prompt ?? DEFAULT_BEAT_PROMPT },
-      { retry: true }
-    );
-    console.log("[beatWorkflow] OpenRouter prompt generated");
-
-    const fileUrl = await step.runAction(
-      internal.actions.elevenLabsComposeAndUpload,
-      { prompt: elevenLabsPrompt },
-      { retry: true }
-    );
-    console.log("[beatWorkflow] ElevenLabs composed and uploaded", { fileUrl });
-
-    await step.runMutation(internal.rooms.updateGeneratedAudio, {
+    console.log("[instrumentalWorkflow] Started", {
       roomId: args.roomId,
       teamId: args.teamId,
-      playerId: args.playerId,
+      melodyPlayerId: args.melodyPlayerId,
+    });
+
+    const taskId = await step.runAction(
+      internal.actions.sunoUploadAndCover,
+      { uploadUrl: args.mixedAudioUrl, role: "instrumental" },
+      { retry: true }
+    );
+    console.log("[instrumentalWorkflow] Suno instrumental generation started", { taskId });
+
+    const fileUrl = await step.runAction(
+      internal.actions.sunoPollDownloadAndUpload,
+      { taskId, role: "instrumental" },
+      { retry: false }
+    );
+    console.log("[instrumentalWorkflow] Suno instrumental downloaded and uploaded", { fileUrl });
+
+    await step.runMutation(internal.rooms.updateGeneratedInstrumental, {
+      roomId: args.roomId,
+      teamId: args.teamId,
       fileUrl,
-      role: "beat",
       prompt: args.prompt,
     });
-    console.log("[beatWorkflow] Completed");
+    console.log("[instrumentalWorkflow] Completed");
   },
 });
-
-const DEFAULT_MELODY_PROMPT = "Add a beautiful melody with a single instrument";
 
 export const melodyWorkflow = workflow.define({
   args: {
@@ -69,17 +69,14 @@ export const melodyWorkflow = workflow.define({
 
     const taskId = await step.runAction(
       internal.actions.sunoUploadAndCover,
-      {
-        uploadUrl: sourceUrl,
-        prompt: args.prompt ?? DEFAULT_MELODY_PROMPT,
-      },
+      { uploadUrl: sourceUrl, role: "melody" },
       { retry: true }
     );
     console.log("[melodyWorkflow] Suno upload and cover started", { taskId });
 
     const fileUrl = await step.runAction(
       internal.actions.sunoPollDownloadAndUpload,
-      { taskId },
+      { taskId, role: "melody" },
       { retry: false }
     );
     console.log("[melodyWorkflow] Suno file downloaded and uploaded", { fileUrl });
@@ -96,15 +93,16 @@ export const melodyWorkflow = workflow.define({
   },
 });
 
-export const startBeatGeneration = mutation({
+export const startInstrumentalGeneration = mutation({
   args: {
     roomId: v.id("rooms"),
     teamId: v.id("teams"),
-    playerId: v.id("players"),
+    melodyPlayerId: v.id("players"),
     prompt: v.optional(v.string()),
+    mixedAudioUrl: v.string(),
   },
   handler: async (ctx, args): Promise<string> => {
-    return await workflow.start(ctx, internal.workflows.beatWorkflow, args);
+    return await workflow.start(ctx, internal.workflows.instrumentalWorkflow, args);
   },
 });
 

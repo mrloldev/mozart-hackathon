@@ -9,12 +9,10 @@ export default function LocalGameView({
   teams,
   setTeams,
   onStartBattle,
-  onBack,
 }: {
   teams: LocalTeam[];
   setTeams: React.Dispatch<React.SetStateAction<LocalTeam[]>>;
   onStartBattle: () => Promise<void>;
-  onBack: () => void;
 }) {
   const [starting, setStarting] = useState(false);
 
@@ -72,12 +70,6 @@ export default function LocalGameView({
         >
           <CaretRight size={24} weight="bold" />
           {starting ? "STARTING…" : "START BATTLE"}
-        </button>
-        <button
-          onClick={onBack}
-          className="text-sm font-bold text-white/50 hover:text-white/80"
-        >
-          Back to Menu
         </button>
       </div>
     </div>

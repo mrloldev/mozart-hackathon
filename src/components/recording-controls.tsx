@@ -31,6 +31,8 @@ export default function RecordingControls({
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const MAX_RECORDING_TIME = 15;
+
   const stopRecording = useCallback(async () => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -87,9 +89,9 @@ export default function RecordingControls({
       setRecordingTime(0);
       timerRef.current = setInterval(() => {
         setRecordingTime((prev) => {
-          if (prev >= 29) {
+          if (prev >= 14) {
             stopRecording();
-            return 30;
+            return 15;
           }
           return prev + 1;
         });
@@ -99,7 +101,8 @@ export default function RecordingControls({
     }
   };
 
-  const timeLeft = 30 - recordingTime;
+  const maxRecordingTime = 15;
+  const timeLeft = maxRecordingTime - recordingTime;
   const circumference = 2 * Math.PI * 30;
 
   return (
@@ -125,7 +128,7 @@ export default function RecordingControls({
                   stroke="#06b6d4"
                   strokeWidth="3" strokeLinecap="round"
                   strokeDasharray={circumference}
-                  strokeDashoffset={circumference * (1 - recordingTime / 30)}
+                  strokeDashoffset={circumference * (1 - recordingTime / maxRecordingTime)}
                   style={{ transition: "stroke-dashoffset 1s linear" }}
                 />
               </svg>

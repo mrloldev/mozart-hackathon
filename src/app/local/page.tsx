@@ -10,6 +10,7 @@ import { useUploadThing } from "@/utils/uploadthing";
 import AppShell from "@/components/app-shell";
 import LocalGameView from "@/components/local-game-view";
 import GameView from "@/components/game-view";
+import { mixBeatAndMelodyBlob } from "@/lib/audio-mix";
 
 export default function LocalPage() {
   const router = useRouter();
@@ -26,8 +27,7 @@ export default function LocalPage() {
 
   const createLocalRoomMut = useMutation(api.rooms.createLocalRoom);
   const recordComplete = useMutation(api.rooms.recordComplete);
-  const startBeatGeneration = useMutation(api.workflows.startBeatGeneration);
-  const startMelodyGeneration = useMutation(api.workflows.startMelodyGeneration);
+  const startInstrumentalGeneration = useMutation(api.workflows.startInstrumentalGeneration);
   const { startUpload } = useUploadThing("audioRecording");
 
   const showToast = (msg: string) => {
@@ -75,29 +75,34 @@ export default function LocalPage() {
           .find((p) => p._id === playerId);
         const role = player?.role;
         try {
-          const file = new File([blob], `recording-${Date.now()}.webm`, {
-            type: blob.type || "audio/webm",
-          });
-          const uploadResult = await startUpload([file]);
-          const fileUrl = uploadResult?.[0]?.ufsUrl;
-          if (!fileUrl) throw new Error("Upload failed");
-
-          if (role === "beat") {
+          if (role === "melody") {
+            const myTeam = activeRoom?.teams.find((t) => t._id === activeTeamId);
+            const beatUrl = myTeam?.trackUrls?.[0];
+            if (!beatUrl) {
+              showToast("Beat not found. Record beat first.");
+              return;
+            }
+            const mixedBlob = await mixBeatAndMelodyBlob(beatUrl, blob);
+            const file = new File([mixedBlob], `instrumental-${Date.now()}.wav`, {
+              type: "audio/wav",
+            });
+            const uploadResult = await startUpload([file]);
+            const fileUrl = uploadResult?.[0]?.ufsUrl;
+            if (!fileUrl) throw new Error("Upload failed");
             await recordComplete({ playerId, roomId: activeRoomId, fileUrl });
-            startBeatGeneration({
+            startInstrumentalGeneration({
               roomId: activeRoomId,
               teamId: activeTeamId,
-              playerId,
-            }).catch(() => {});
-          } else if (role === "melody") {
-            await recordComplete({ playerId, roomId: activeRoomId, fileUrl });
-            startMelodyGeneration({
-              roomId: activeRoomId,
-              teamId: activeTeamId,
-              playerId,
-              userRecordingUrl: fileUrl,
+              melodyPlayerId: playerId,
+              mixedAudioUrl: fileUrl,
             }).catch(() => {});
           } else {
+            const file = new File([blob], `recording-${Date.now()}.webm`, {
+              type: blob.type || "audio/webm",
+            });
+            const uploadResult = await startUpload([file]);
+            const fileUrl = uploadResult?.[0]?.ufsUrl;
+            if (!fileUrl) throw new Error("Upload failed");
             await recordComplete({ playerId, roomId: activeRoomId, fileUrl });
           }
         } catch {
@@ -133,7 +138,6 @@ export default function LocalPage() {
           teams={localTeams}
           setTeams={setLocalTeams}
           onStartBattle={handleStartBattle}
-          onBack={() => router.push("/")}
         />
       </main>
 

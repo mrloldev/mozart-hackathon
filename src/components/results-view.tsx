@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { TEAM_COLORS } from "@/constants/game";
 import { mixTrackUrls } from "@/lib/audio-mix";
+import StaticWaveform from "@/components/static-waveform";
 import type { Id } from "../../convex/_generated/dataModel";
 
 interface TeamPlayer {
@@ -20,6 +21,7 @@ interface Team {
   _id: Id<"teams">;
   name: string;
   players: TeamPlayer[];
+  trackUrls?: (string | null)[];
 }
 
 interface RoomSong {
@@ -44,6 +46,11 @@ function getTrackUrls(players: TeamPlayer[]): (string | null)[] {
   return ROLE_ORDER.map(
     (role) => players.find((p) => p.role === role)?.recordingUrl ?? null
   );
+}
+
+function getUrlsForTeam(team: Team): (string | null)[] {
+  if (team.trackUrls?.some((u) => u != null && u.length > 0)) return team.trackUrls!;
+  return getTrackUrls(team.players);
 }
 
 function formatTime(s: number): string {
@@ -139,20 +146,20 @@ export default function ResultsView({
       const key = `combined-${team._id}`;
       if (playingKey === key) { stopAll(); return; }
       stopAll();
-      const urls = getTrackUrls(team.players).filter(
-        (u): u is string => u != null && u.length > 0
-      );
-      if (urls.length === 0) return;
+      const urls = getUrlsForTeam(team);
+      if (!urls.some((u) => u != null && u.length > 0)) return;
       setPlayingKey(key);
       try {
         const blob = await mixTrackUrls(urls);
+        if (!blob.size) throw new Error("Empty mix");
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
         audio.onended = () => { URL.revokeObjectURL(url); stopAll(); };
         await audio.play();
         startProgressTracking(audio);
-      } catch {
+      } catch (err) {
+        console.error("[ResultsView] Combined mix failed:", err);
         stopAll();
       }
     },
@@ -254,7 +261,8 @@ export default function ResultsView({
             const isWinner = originalIndex === winnerIndex && total > 0;
             const combinedKey = `combined-${team._id}`;
             const isCombinedPlaying = playingKey === combinedKey;
-            const hasTrack = getTrackUrls(team.players).some((u) => u != null && u.length > 0);
+            const urlsForTeam = team.trackUrls ?? getTrackUrls(team.players);
+            const hasTrack = urlsForTeam.some((u) => u != null && u.length > 0);
 
             return (
               <motion.div
@@ -302,14 +310,52 @@ export default function ResultsView({
                   </div>
 
                   {hasTrack && (
-                    <MiniPlayer
-                      label="Combined Mix"
-                      color={colors.bgColor}
-                      isPlaying={isCombinedPlaying}
-                      progress={isCombinedPlaying ? progress : 0}
-                      duration={isCombinedPlaying ? duration : 0}
-                      onToggle={() => handlePlayCombined(team)}
-                    />
+                    <>
+                      <MiniPlayer
+                        label="Combined Mix"
+                        color={colors.bgColor}
+                        isPlaying={isCombinedPlaying}
+                        progress={isCombinedPlaying ? progress : 0}
+                        duration={isCombinedPlaying ? duration : 0}
+                        onToggle={() => handlePlayCombined(team)}
+                      />
+                      <div className="mt-3 space-y-2 rounded-lg border border-white/6 bg-black/20 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-white/40">
+                          Track record
+                        </p>
+                        {ROLE_ORDER.map((role) => {
+                          const url = urlsForTeam[ROLE_ORDER.indexOf(role)];
+                          if (!url) return null;
+                          const prog =
+                            isCombinedPlaying && duration > 0
+                              ? progress / duration
+                              : 0;
+                          return (
+                            <div
+                              key={role}
+                              className="flex items-center gap-3"
+                            >
+                              <span className="w-14 shrink-0 text-xs font-medium text-white/60">
+                                {ROLE_LABELS[role]}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <StaticWaveform
+                                  url={url}
+                                  progress={prog}
+                                  height={24}
+                                  barColor="rgba(255,255,255,0.25)"
+                                  playedColor={
+                                    originalIndex === 0
+                                      ? "rgba(6,182,212,0.85)"
+                                      : "rgba(249,115,22,0.85)"
+                                  }
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
               </motion.div>

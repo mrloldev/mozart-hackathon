@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const MAX_RECORDING_TIME = 30;
+const MAX_RECORDING_TIME = 15;
 
 export function useRecording(onStop: () => void) {
   const [isRecording, setIsRecording] = useState(false);

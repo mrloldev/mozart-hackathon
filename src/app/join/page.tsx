@@ -82,6 +82,7 @@ function JoinPageContent() {
           onSubmit={handleJoin}
           submitLabel="JOIN ROOM"
           joinCode={joinCode}
+          hideBackInStep1
         />
       </main>
 
