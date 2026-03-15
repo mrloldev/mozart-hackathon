@@ -229,6 +229,8 @@ export default function ResultsView({
   const votes1 = voteTally && team1 ? (voteTally[team1._id] ?? 0) : 0;
   const total = votes0 + votes1;
   const winnerIndex = votes1 > votes0 ? 1 : 0;
+  const bothAIReady = room.teams.length >= 2 && room.teams.every((t) => t.hasInstrumental === true);
+  const votingClosed = bothAIReady;
 
   const sortedTeams = [...room.teams].map((t, i) => ({ team: t, originalIndex: i }));
   if (total > 0) {
@@ -247,36 +249,44 @@ export default function ResultsView({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Header — contextual based on win/loss */}
         <div className="text-center">
-          {total > 0 && teamId ? (
+          {votingClosed && total > 0 && teamId ? (
             (() => {
               const myVotes = voteTally ? (voteTally[teamId] ?? 0) : 0;
               const opponentVotes = total - myVotes;
               const won = myVotes > opponentVotes;
+              const tied = myVotes === opponentVotes;
               return (
                 <>
-                  <h2 className={`text-3xl font-black tracking-tight sm:text-4xl ${won ? "text-cyan-400" : "text-white/60"}`}>
-                    {won ? "YOU WON!" : "YOU LOST"}
+                  <h2 className={`text-3xl font-black tracking-tight sm:text-4xl ${tied ? "text-white" : won ? "text-cyan-400" : "text-white/60"}`}>
+                    {tied ? "IT'S A TIE!" : won ? "YOU WON!" : "YOU LOST"}
                   </h2>
                   <p className="mt-1 text-sm text-white/40">
-                    {won ? "Your team got the most votes" : "Better luck next round"}
+                    {tied ? "Both teams tied" : won ? "Your team got the most votes" : "Better luck next round"}
                   </p>
                 </>
               );
             })()
-          ) : (
+          ) : votingClosed ? (
             <>
               <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
                 ROUND COMPLETE
               </h2>
               <p className="mt-1 text-sm text-white/40">Listen to each team&apos;s creation</p>
             </>
+          ) : (
+            <>
+              <h2 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+                ROUND COMPLETE
+              </h2>
+              <p className="mt-1 animate-pulse text-sm text-cyan-400/70">
+                Audience is voting...
+              </p>
+            </>
           )}
         </div>
 
-        {/* Vote bar */}
-        {total > 0 && team0 && team1 && (
+        {(total > 0 || !votingClosed) && team0 && team1 && (
           <motion.div
             className="rounded-xl border border-white/8 bg-white/5 p-4"
             initial={{ opacity: 0 }}

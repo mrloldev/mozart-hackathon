@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -172,14 +173,16 @@ function WatchPageContent() {
   const effectiveVote = optimisticVote !== null ? optimisticVote : myVote;
   const currentRole = ROLES[currentRoleIndex];
   const currentTeam = teams[currentTeamTurn];
+  const bothAIReady = teams.length >= 2 && teams.every((t: any) => t.hasInstrumental === true);
+  const votingOpen = phase === "playing" || (phase === "results" && !bothAIReady);
 
   return (
     <div className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-white/10 bg-black/60 px-6 py-4 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <Link href="/" className="text-xl font-black tracking-tight">
-            <span className="text-cyan-400">ARKANO</span>
-            <span className="ml-2 text-sm font-medium text-cyan-400">LIVE</span>
+          <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
+            <Image src="/logo.svg" alt="Arkano" width={70} height={58} priority />
+            <span className="text-sm font-bold text-cyan-400">LIVE</span>
           </Link>
           <div className="flex items-center gap-3">
             <button
@@ -251,9 +254,48 @@ function WatchPageContent() {
 
         {phase === "results" && (
           <>
-            <div className="text-center">
-              <h1 className="text-2xl font-black text-white">Round complete!</h1>
-            </div>
+            {!votingOpen && team0 && team1 ? (() => {
+              const votes0 = voteTally[team0._id] ?? 0;
+              const votes1 = voteTally[team1._id] ?? 0;
+              const total = votes0 + votes1;
+              const winnerTeam = votes0 >= votes1 ? team0 : team1;
+              const isTie = votes0 === votes1;
+              return (
+                <div className="text-center">
+                  {total > 0 && !isTie ? (
+                    <>
+                      <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+                        🏆 {winnerTeam.name} WINS!
+                      </h1>
+                      <p className="mt-1 text-sm text-white/40">
+                        {Math.max(votes0, votes1)} to {Math.min(votes0, votes1)} — Voting is closed
+                      </p>
+                    </>
+                  ) : total > 0 ? (
+                    <>
+                      <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+                        IT&apos;S A TIE!
+                      </h1>
+                      <p className="mt-1 text-sm text-white/40">
+                        {votes0} to {votes1} — Voting is closed
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <h1 className="text-2xl font-black text-white">Round complete!</h1>
+                      <p className="mt-1 text-sm text-white/40">No votes were cast</p>
+                    </>
+                  )}
+                </div>
+              );
+            })() : (
+              <div className="text-center">
+                <h1 className="text-2xl font-black text-white">Round complete!</h1>
+                <p className="mt-1 animate-pulse text-sm text-cyan-400/70">
+                  Voting is open — cast your vote below!
+                </p>
+              </div>
+            )}
 
             <div className="grid gap-4 md:grid-cols-2">
               {teams.map((team: any, i: number) => (
@@ -276,7 +318,7 @@ function WatchPageContent() {
                 team0Id={team0._id}
                 team1Id={team1._id}
                 myVote={effectiveVote}
-                onVote={sessionId ? handleVote : undefined}
+                onVote={votingOpen && sessionId ? handleVote : undefined}
               />
             )}
           </>
